@@ -183,21 +183,26 @@ export default function AthleteShowcase({ onBrowse }: { onBrowse?: (category: st
     dracoLoader.setDecoderPath("https://www.gstatic.com/draco/versioned/decoders/1.5.7/");
     loader.setDRACOLoader(dracoLoader);
     loader.setMeshoptDecoder(MeshoptDecoder);
-    loader.load("/athlete.glb", (gltf) => {
-      const model = gltf.scene;
-      model.scale.setScalar(2.5);
-      model.position.y = 0;
-      model.traverse((object) => {
-        if (object instanceof THREE.Mesh) {
-          object.castShadow = true;
-          object.receiveShadow = true;
-        }
-      });
-      fallback.visible = false;
-      scene.add(model);
-    }, undefined, () => {
-      // The local fallback stays visible until a production athlete.glb is supplied.
-    });
+    loader.load(
+      "/athlete.glb",
+      (gltf) => {
+        const model = gltf.scene;
+        model.scale.setScalar(2.5);
+        model.position.y = 0;
+        model.traverse((object) => {
+          if (object instanceof THREE.Mesh) {
+            object.castShadow = true;
+            object.receiveShadow = true;
+          }
+        });
+        fallback.visible = false;
+        scene.add(model);
+      },
+      undefined,
+      () => {
+        // The local fallback stays visible until a production athlete.glb is supplied.
+      }
+    );
 
     const setActive = (id: string | null) => {
       activeIdRef.current = id;
