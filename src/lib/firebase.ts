@@ -1,5 +1,14 @@
 import { getApp, getApps, initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signInWithRedirect, signOut, type User } from "firebase/auth";
+import {
+  getAuth,
+  getRedirectResult,
+  GoogleAuthProvider,
+  onAuthStateChanged,
+  signInWithPopup,
+  signInWithRedirect,
+  signOut,
+  type User,
+} from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -40,14 +49,35 @@ export const signInWithGoogle = async () => {
   }
 
   try {
+    const redirectResult = await getRedirectResult(auth);
+    if (redirectResult?.user) {
+      return redirectResult;
+    }
+  } catch {
+    // Ignore redirect result errors and continue with popup flow.
+  }
+
+  try {
     return await signInWithPopup(auth, googleProvider);
   } catch (error) {
     const message = error instanceof Error ? error.message : "";
-    const isPopupBlocked = message.includes("popup") || message.includes("blocked") || message.includes("Cross-Origin-Opener-Policy") || message.includes("auth/popup-blocked");
+    const code = typeof error === "object" && error && "code" in error ? String((error as { code?: string }).code) : "";
+    const isPopupBlocked = message.includes("popup") || message.includes("blocked") || message.includes("Cross-Origin-Opener-Policy") || message.includes("auth/popup-blocked") || code === "auth/popup-blocked";
+    const isUnauthorizedDomain = code === "auth/unauthorized-domain" || message.includes("unauthorized-domain");
+    const isInvalidApiKey = code === "auth/invalid-api-key" || message.includes("invalid-api-key");
+    const isCancelledByUser = code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request";
 
-    if (isPopupBlocked) {
+    if (isUnauthorizedDomain) {
+      throw new Error("This domain is not authorized in Firebase. In Firebase Console > Authentication > Settings > Authorized domains, add localhost, 127.0.0.1, and your live Vercel domain.");
+    }
+
+    if (isInvalidApiKey) {
+      throw new Error("Firebase API key is invalid. Check the NEXT_PUBLIC_FIREBASE_API_KEY value in your environment.");
+    }
+
+    if (isPopupBlocked || isCancelledByUser) {
       await signInWithRedirect(auth, googleProvider);
-      throw new Error("Google sign-in is redirecting in this browser. Complete the sign-in in the next page.");
+      throw new Error("Google sign-in is redirecting. Complete the sign-in in the next page.");
     }
 
     throw error;

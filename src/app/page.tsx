@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import {
   ArrowRight,
+  Check,
   ChevronRight,
   Heart,
   Menu,
@@ -15,7 +17,10 @@ import {
   X,
 } from "lucide-react";
 import AthleteShowcase from "./AthleteShowcase";
-import { firebaseEnabled, logoutFirebase, signInWithGoogle, subscribeToAuth } from "@/lib/firebase";
+import { auth, firebaseEnabled, signInWithGoogle, subscribeToAuth } from "@/lib/firebase";
+
+type CustomerAddress = { id: string; label: string; city: string; address: string; is_default: boolean };
+type CustomerProfile = { full_name: string | null; email: string | null; phone: string | null; addresses: CustomerAddress[] | null };
 
 function Reveal({ children, className = "", delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
   const elementRef = useRef<HTMLDivElement>(null);
@@ -147,6 +152,7 @@ type Product = {
   reviews: number;
   image: string;
   tone: string;
+  stock?: number;
   badge?: string;
 };
 
@@ -155,7 +161,7 @@ type CartItem = {
   quantity: number;
 };
 
-const products: Product[] = [
+export const legacySampleProducts: Product[] = [
   {
     id: 1,
     name: "Astrox 100 Tour",
@@ -525,51 +531,10 @@ const products: Product[] = [
 ];
 
 const sports = [
-  { name: "Badminton", count: "214 products", image: "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=1400&q=92" },
-  { name: "Tennis", count: "96 products", image: "https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?auto=format&fit=crop&w=1400&q=92" },
-  { name: "Squash", count: "64 products", image: "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=1400&q=92" },
-  { name: "Accessories", count: "128 products", image: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1400&q=92" },
-];
-
-const featuredProduct = products.find((product) => product.name === "Nanoflare 1000Z") ?? products[0];
-
-const featuredRackets = [
-  {
-    product: featuredProduct,
-    eyebrow: "FEATURED RACKET",
-    description: "Engineered for explosive speed and effortless power, the Nanoflare 1000Z is built for players who want to own the next rally.",
-    specs: [["FRAME", "AERO+"], ["FLEX", "STIFF"], ["PLAYER LEVEL", "ADVANCED"]],
-  },
-  {
-    product: products.find((product) => product.name === "Astrox 99 Pro") ?? products[0],
-    eyebrow: "POWER SERIES",
-    description: "A head-heavy attacking racket with a stiff response, designed to transfer maximum power into every decisive smash.",
-    specs: [["BALANCE", "HEAD HEAVY"], ["FLEX", "STIFF"], ["PLAYER LEVEL", "ADVANCED"]],
-  },
-  {
-    product: products.find((product) => product.name === "Astrox 100 ZZ") ?? products[0],
-    eyebrow: "SPEED SERIES",
-    description: "Built for explosive acceleration, the Astrox 100 ZZ combines a compact frame with a sharp, uncompromising response for attacking players.",
-    specs: [["BALANCE", "HEAD HEAVY"], ["FLEX", "EXTRA STIFF"], ["PLAYER LEVEL", "PRO"]],
-  },
-  {
-    product: products.find((product) => product.name === "Astrox 88S Pro") ?? products[0],
-    eyebrow: "DOUBLES CONTROL",
-    description: "A precise attacking racket made for fast exchanges, quick handling, and confident control from the front of the court.",
-    specs: [["BALANCE", "HEAD HEAVY"], ["FLEX", "STIFF"], ["PLAYER LEVEL", "ADVANCED"]],
-  },
-  {
-    product: products.find((product) => product.name === "Power Cushion Cascade Accel") ?? products[0],
-    eyebrow: "COURT SHOES",
-    description: "Move with confidence through every change of direction with responsive cushioning, secure support, and dependable court grip.",
-    specs: [["CUSHIONING", "POWER CUSHION"], ["USE", "ALL COURT"], ["FIT", "STABLE"]],
-  },
-  {
-    product: products.find((product) => product.name === "Power Cushion Aerus Z") ?? products[0],
-    eyebrow: "LIGHTWEIGHT SERIES",
-    description: "A featherlight court shoe that keeps your footwork quick, combining agile movement with the cushioning needed for long rallies.",
-    specs: [["WEIGHT", "ULTRA LIGHT"], ["CUSHIONING", "POWER CUSHION"], ["USE", "ALL COURT"]],
-  },
+  { name: "Badminton", image: "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=1400&q=92" },
+  { name: "Tennis", image: "https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?auto=format&fit=crop&w=1400&q=92" },
+  { name: "Squash", image: "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=1400&q=92" },
+  { name: "Accessories", image: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1400&q=92" },
 ];
 
 function ProductCard({ product, onAdd }: { product: Product; onAdd: (product: Product) => void }) {
@@ -583,20 +548,27 @@ function ProductCard({ product, onAdd }: { product: Product; onAdd: (product: Pr
         <button className={`heart-button ${liked ? "liked" : ""}`} aria-label={`Add ${product.name} to wishlist`} onClick={() => setLiked(!liked)}>
           <Heart size={17} fill={liked ? "currentColor" : "none"} />
         </button>
-        <button className="quick-add" onClick={() => onAdd(product)}>ADD TO BAG <Plus size={15} /></button>
+        <button className="quick-add" onClick={() => onAdd(product)} disabled={product.stock === 0}>{product.stock === 0 ? "SOLD OUT" : <>ADD TO BAG <Plus size={15} /></>}</button>
       </div>
       <div className="product-meta">
         <div className="product-brand">{product.brand}</div>
         <h3>{product.name}</h3>
-        <div className="rating"><Star size={13} fill="currentColor" /><span>{product.rating}</span><span className="review-count">({product.reviews})</span></div>
-        <div className="price-line"><strong>AED {product.price.toLocaleString()}</strong>{product.oldPrice && <del>AED {product.oldPrice}</del>}</div>
+        {product.rating > 0 && <div className="rating"><Star size={13} fill="currentColor" /><span>{product.rating}</span><span className="review-count">({product.reviews})</span></div>}
+        <div className="price-line"><strong>AED {product.price.toLocaleString()}</strong></div>
+        <div className="product-stock">{product.stock === 0 ? "Out of stock" : `${product.stock} in stock`}</div>
       </div>
     </article>
   );
 }
 
 export default function Home() {
+  const router = useRouter();
+  const pathname = usePathname();
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [catalogLoaded, setCatalogLoaded] = useState(false);
+  const [cartRestored, setCartRestored] = useState(false);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -609,54 +581,123 @@ export default function Home() {
   const [pendingProduct, setPendingProduct] = useState<Product | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [checkoutForm, setCheckoutForm] = useState({
-    fullName: "",
-    phone: "",
-    city: "",
-    address: "",
-    notes: "",
-  });
+  const [customerProfile, setCustomerProfile] = useState<CustomerProfile | null>(null);
+  const [selectedAddressId, setSelectedAddressId] = useState("");
+  const [checkoutNotes, setCheckoutNotes] = useState("");
+  const [checkoutBusy, setCheckoutBusy] = useState(false);
+  const [checkoutSuccess, setCheckoutSuccess] = useState<string | null>(null);
 
   useEffect(() => {
-    const savedCart = localStorage.getItem("alraed-cart");
-    const savedLogin = localStorage.getItem("alraed-login");
-
-    if (savedCart) {
+    let active = true;
+    const loadStore = async (restoreCart = false) => {
       try {
-        setCart(JSON.parse(savedCart));
-      } catch {
-        setCart([]);
+        const response = await fetch("/api/products", { cache: "no-store" });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Unable to load products.");
+        const rows = result.products as Array<Record<string, unknown>>;
+        if (!active) return;
+        const currentProducts = rows.map((row) => ({
+          id: Number(row.id),
+          name: String(row.name ?? ""),
+          brand: String(row.brand ?? ""),
+          category: String(row.category ?? ""),
+          price: Number(row.price ?? 0),
+          rating: Number(row.rating ?? 0),
+          reviews: Number(row.reviews ?? 0),
+          image: String(row.image_url ?? ""),
+          tone: "#e8edf4",
+          stock: Number(row.stock ?? 0),
+        }));
+        setProducts(currentProducts);
+        if (restoreCart) {
+          let savedItems: CartItem[] = [];
+          try {
+            const savedCart = localStorage.getItem("alraed-cart");
+            savedItems = savedCart ? JSON.parse(savedCart) as CartItem[] : [];
+          } catch {
+            localStorage.removeItem("alraed-cart");
+          }
+          setCart(Array.isArray(savedItems) ? savedItems.flatMap((item) => {
+            const product = currentProducts.find((currentProduct) => currentProduct.id === Number(item?.product?.id));
+            const quantity = Number(item?.quantity);
+            return product && Number.isInteger(quantity) && quantity > 0 ? [{ product, quantity }] : [];
+          }) : []);
+        } else {
+          setCart((current) => current.flatMap((item) => {
+            const product = currentProducts.find((currentProduct) => currentProduct.id === item.product.id);
+            return product ? [{ ...item, product }] : [];
+          }));
+        }
+        setCatalogError(null);
+      } catch (error) {
+        if (active && restoreCart) setCatalogError(error instanceof Error ? error.message : "Unable to load products.");
+      } finally {
+        if (active && restoreCart) {
+          setCatalogLoaded(true);
+          setCartRestored(true);
+        }
       }
-    }
-
-    if (savedLogin === "true") {
-      setIsLoggedIn(true);
-    }
+    };
+    void loadStore(true);
+    const refreshCatalog = () => {
+      if (document.visibilityState === "visible") void loadStore();
+    };
+    const refreshTimer = window.setInterval(refreshCatalog, 30_000);
+    window.addEventListener("focus", refreshCatalog);
+    document.addEventListener("visibilitychange", refreshCatalog);
+    return () => {
+      active = false;
+      window.clearInterval(refreshTimer);
+      window.removeEventListener("focus", refreshCatalog);
+      document.removeEventListener("visibilitychange", refreshCatalog);
+    };
   }, []);
 
   useEffect(() => {
+    let active = true;
     const unsubscribe = subscribeToAuth((user) => {
       const loggedIn = Boolean(user);
       setIsLoggedIn(loggedIn);
       setUserName(user?.displayName ?? user?.email ?? null);
-      if (loggedIn) {
-        localStorage.setItem("alraed-login", "true");
-      } else {
+      if (!user) {
+        setCustomerProfile(null);
         localStorage.setItem("alraed-login", "false");
+        return;
       }
+
+      localStorage.setItem("alraed-login", "true");
+      void (async () => {
+        try {
+          const token = await user.getIdToken();
+          const response = await fetch("/api/profile", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error || "Unable to load your account.");
+          if (!active) return;
+          const profile = result.profile as CustomerProfile;
+          setCustomerProfile(profile);
+          const complete = Boolean(profile.phone && profile.addresses?.length);
+          if (!complete && pathname !== "/account") router.replace("/account?setup=1");
+        } catch {
+          if (active && pathname !== "/account") router.replace("/account?setup=1");
+        }
+      })();
     });
 
-    return () => unsubscribe();
-  }, []);
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, [pathname, router]);
 
   useEffect(() => {
+    if (!catalogLoaded || !cartRestored) return;
     localStorage.setItem("alraed-cart", JSON.stringify(cart));
-  }, [cart]);
+  }, [cart, catalogLoaded, cartRestored]);
 
   useEffect(() => {
     const handleCategoryShortcut = (event: Event) => {
       const category = (event as CustomEvent<string>).detail;
-      setActiveCategory(category);
+      setActiveCategory(["Badminton", "Tennis", "Squash", "Accessories"].includes(category) ? category : "Accessories");
       document.getElementById("shop")?.scrollIntoView({ behavior: "smooth" });
     };
     window.addEventListener("alraed-category", handleCategoryShortcut);
@@ -666,23 +707,9 @@ export default function Home() {
   const searchCatalog = useMemo(() => {
     const categorySuggestions = [
       { label: "Badminton", type: "Category", value: "badminton" },
-      { label: "Badminton shoes", type: "Category", value: "badminton shoes" },
-      { label: "Badminton rackets", type: "Category", value: "badminton rackets" },
-      { label: "Badminton grip", type: "Category", value: "badminton grip" },
-      { label: "Badminton strings", type: "Category", value: "badminton strings" },
-      { label: "Badminton accessories", type: "Category", value: "badminton accessories" },
       { label: "Tennis", type: "Category", value: "tennis" },
-      { label: "Tennis shoes", type: "Category", value: "tennis shoes" },
-      { label: "Tennis rackets", type: "Category", value: "tennis rackets" },
       { label: "Squash", type: "Category", value: "squash" },
-      { label: "Squash shoes", type: "Category", value: "squash shoes" },
-      { label: "Squash accessories", type: "Category", value: "squash accessories" },
-      { label: "Shoes", type: "Category", value: "shoes" },
-      { label: "Rackets", type: "Category", value: "rackets" },
-      { label: "Grip", type: "Category", value: "grip" },
-      { label: "Strings", type: "Category", value: "strings" },
       { label: "Accessories", type: "Category", value: "accessories" },
-      { label: "Apparel", type: "Category", value: "apparel" },
     ];
 
     const brandSuggestions = Array.from(new Set(products.map((product) => product.brand))).map((brand) => ({
@@ -698,7 +725,7 @@ export default function Home() {
     }));
 
     return [...categorySuggestions, ...brandSuggestions, ...productSuggestions];
-  }, []);
+  }, [products]);
 
   const searchSuggestions = useMemo(() => {
     const trimmedQuery = query.trim();
@@ -718,7 +745,7 @@ export default function Home() {
     const matchesCategory = activeCategory === "All" || product.category === activeCategory;
     const matchesQuery = `${product.name} ${product.brand} ${product.category}`.toLowerCase().includes(query.toLowerCase());
     return matchesCategory && matchesQuery;
-  }), [activeCategory, query]);
+  }), [activeCategory, products, query]);
 
   const applySearch = (nextValue: string) => {
     const value = nextValue.trim();
@@ -730,7 +757,7 @@ export default function Home() {
 
     setQuery(value);
     setSearchFocused(false);
-    const matchedCategory = ["Badminton", "Tennis", "Squash", "Shoes", "Strings", "Grips", "Apparel", "Accessories"].find(
+    const matchedCategory = ["Badminton", "Tennis", "Squash", "Accessories"].find(
       (category) => category.toLowerCase() === value.toLowerCase() || value.toLowerCase().includes(category.toLowerCase())
     );
 
@@ -797,15 +824,7 @@ export default function Home() {
   };
 
   const handleLogout = async () => {
-    try {
-      await logoutFirebase();
-    } catch {
-      // no-op: user can still continue browsing
-    }
-
-    setIsLoggedIn(false);
-    setUserName(null);
-    localStorage.setItem("alraed-login", "false");
+    router.push("/account");
   };
 
   const updateQuantity = (productId: number, change: number) => {
@@ -827,67 +846,102 @@ export default function Home() {
       return;
     }
 
+    const savedAddresses = customerProfile?.addresses ?? [];
+    if (!customerProfile?.phone || savedAddresses.length === 0) {
+      router.push("/account?setup=1");
+      return;
+    }
+
     setCartOpen(false);
+    setSelectedAddressId(savedAddresses.find((address) => address.is_default)?.id ?? savedAddresses[0].id);
+    setCheckoutNotes("");
+    setAuthError(null);
     setCheckoutOpen(true);
   };
 
   const handleCheckoutSubmit = async () => {
-    const customerPhone = normalizePhoneNumber(checkoutForm.phone || "");
+    const savedAddresses = customerProfile?.addresses ?? [];
+    const shippingAddress = savedAddresses.find((address) => address.id === selectedAddressId) ?? savedAddresses.find((address) => address.is_default);
+    const customerPhone = normalizePhoneNumber(customerProfile?.phone || "");
     const businessPhone = normalizePhoneNumber(WHATSAPP_NUMBER || "");
+
+    if (!customerProfile || !shippingAddress || !customerPhone) {
+      setCheckoutOpen(false);
+      router.push("/account?setup=1");
+      return;
+    }
 
     if (!businessPhone) {
       setAuthError("Set NEXT_PUBLIC_WHATSAPP_NUMBER in the environment to enable WhatsApp checkout.");
       return;
     }
 
-    const orderLines = cart
-      .map((item, index) => `${index + 1}. ${item.product.name} x ${item.quantity} - AED ${(item.product.price * item.quantity).toLocaleString()}`)
-      .join("\n");
-
-    const summary = `Hello Al Raed Sports,\n\nI would like to place my order.\n\nCustomer details:\nName: ${checkoutForm.fullName || userName || "Not provided"}\nPhone: ${customerPhone || "Not provided"}\nCity: ${checkoutForm.city || "Not provided"}\nAddress: ${checkoutForm.address || "Not provided"}\nNotes: ${checkoutForm.notes || "None"}\n\nOrder details:\n${orderLines || "No items selected."}\n\nTotal: AED ${cartTotal.toLocaleString()}\n\nPlease share the payment details and confirmation steps. Thank you.`;
-
-    const whatsappUrl = createWhatsAppLink(summary, businessPhone);
-    const whatsappWindow = window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+    const whatsappWindow = window.open("about:blank", "_blank");
 
     if (!whatsappWindow) {
       setAuthError("Your browser blocked the WhatsApp popup. Please allow popups and try again.");
       return;
     }
+    setCheckoutBusy(true);
+    setAuthError(null);
 
     try {
+      const currentUser = auth?.currentUser;
+      if (!currentUser) throw new Error("Your sign-in session expired. Please sign in again.");
+      const token = await currentUser.getIdToken();
       const response = await fetch("/api/orders", {
         method: "POST",
         headers: {
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           products: cart,
-          customerName: checkoutForm.fullName || userName || "Not provided",
-          customerPhone,
-          city: checkoutForm.city,
-          address: checkoutForm.address,
-          notes: checkoutForm.notes,
+          addressId: shippingAddress.id,
+          notes: checkoutNotes,
         }),
       });
 
       const result = await response.json();
 
       if (!response.ok) {
+        whatsappWindow.close();
         setAuthError(result?.error || "Unable to save the order right now.");
         return;
       }
 
+      const confirmedItems = Array.isArray(result.items) ? result.items as Array<{ product_name: string; quantity: number; unit_price: number }> : [];
+      const confirmedTotal = Number(result.total);
+      if (confirmedItems.length === 0 || !Number.isFinite(confirmedTotal)) {
+        throw new Error("The order was saved, but its confirmed price summary could not be prepared. Contact the store with your order reference.");
+      }
+      const orderLines = confirmedItems
+        .map((item, index) => `${index + 1}. ${item.product_name} x ${item.quantity} - AED ${(Number(item.unit_price) * item.quantity).toLocaleString()}`)
+        .join("\n");
+      const summary = `Hello Al Raed Sports,\n\nI would like to confirm this order. Please let me know the available payment options and next steps.\n\nCustomer details:\nName: ${customerProfile.full_name || userName || "Customer"}\nEmail: ${customerProfile.email || "Not provided"}\nPhone: ${customerPhone}\nCity: ${shippingAddress.city}\nAddress: ${shippingAddress.address}\nNotes: ${checkoutNotes.trim() || "None"}\n\nOrder details:\n${orderLines}\n\nTotal: AED ${confirmedTotal.toLocaleString()}\n\nPayment: To be arranged manually via WhatsApp.\n\nPlease confirm this order and advise how to complete payment. Thank you.`;
+
+      const orderId = result?.orderId ? String(result.orderId).slice(0, 8).toUpperCase() : "NEW";
+      const orderNumberMessage = `Order reference: #${orderId}\n`;
+      whatsappWindow.location.href = createWhatsAppLink(
+        `${summary}\n${orderNumberMessage}`,
+        businessPhone
+      );
       setCheckoutOpen(false);
-      setCheckoutForm({ fullName: "", phone: "", city: "", address: "", notes: "" });
       setCart([]);
       localStorage.setItem("alraed-cart", JSON.stringify([]));
+      setCheckoutSuccess("Your order is saved and your payment request has been sent via WhatsApp.");
+      window.setTimeout(() => setCheckoutSuccess(null), 8000);
     } catch (error) {
+      whatsappWindow.close();
       const message = error instanceof Error ? error.message : "Unable to save the order right now.";
       setAuthError(message);
+    } finally {
+      setCheckoutBusy(false);
     }
   };
 
   const browseCategory = (category: string) => setActiveCategory(category);
+  const featuredProducts = products.slice(0, 6);
 
   return (
     <main>
@@ -947,7 +1001,7 @@ export default function Home() {
         <div className="header-group header-group-profile">
           <button className="icon-button login-indicator" aria-label="Account" onClick={() => (isLoggedIn ? handleLogout() : setAuthModalOpen(true))}>
             <UserRound size={19} />
-            <span>{isLoggedIn ? (userName ? "Logout" : "Logged in") : "Login"}</span>
+            <span>{isLoggedIn ? "Account" : "Login"}</span>
           </button>
           <button className="icon-button" aria-label="Wishlist"><Heart size={19} /></button>
         </div>
@@ -969,13 +1023,13 @@ export default function Home() {
 
       <AthleteShowcase onBrowse={browseCategory} />
 
-      <Reveal><section className="content-section" id="categories"><div className="section-heading"><div><p className="eyebrow">FIND YOUR GAME</p><h2>Shop by <em>sport.</em></h2></div><a className="text-link" href="#shop">VIEW ALL <ArrowRight size={16} /></a></div><div className="sport-grid">{sports.map((sport, index) => <a className="sport-card" href="#shop" key={sport.name} style={{ "--card-delay": `${index * 90}ms` } as React.CSSProperties}><img src={sport.image} alt={sport.name} /><div className="sport-shade" /><div className="sport-label"><span>0{index + 1}</span><div><h3>{sport.name}</h3><p>{sport.count}</p></div><ChevronRight size={20} /></div></a>)}</div></section></Reveal>
+      <Reveal><section className="content-section" id="categories"><div className="section-heading"><div><p className="eyebrow">FIND YOUR GAME</p><h2>Shop by <em>sport.</em></h2></div><a className="text-link" href="#shop">VIEW ALL <ArrowRight size={16} /></a></div><div className="sport-grid">{sports.map((sport, index) => <a className="sport-card" href="#shop" onClick={() => setActiveCategory(sport.name)} key={sport.name} style={{ "--card-delay": `${index * 90}ms` } as React.CSSProperties}><img src={sport.image} alt={sport.name} /><div className="sport-shade" /><div className="sport-label"><span>0{index + 1}</span><div><h3>{sport.name}</h3><p>{products.filter((product) => product.category === sport.name).length} products</p></div><ChevronRight size={20} /></div></a>)}</div></section></Reveal>
 
       <ScrollVideo src="/animation3.mp4" eyebrow="VICTOR" title="Choose your weapon." description="Explore performance rackets and court shoes from the brands trusted by serious players." align="left" />
 
-      <Reveal><section className="featured-product-slider"><div className="featured-product-track" style={{ transform: `translateX(-${featuredIndex * 100}%)` }}>{featuredRackets.map(({ product, eyebrow, description, specs }) => <article className="featured-product" key={product.id}><div className="featured-product-image"><img src={product.image} alt={product.name} /><span>THE PLAYER&apos;S CHOICE</span></div><div className="featured-product-copy"><p className="eyebrow">{eyebrow}</p><div className="featured-brand">{product.brand}</div><h2>{product.name}</h2><div className="featured-rating"><Star size={14} fill="currentColor" /> {product.rating} <span>({product.reviews} reviews)</span></div><p className="featured-description">{description}</p><div className="featured-specs">{specs.map(([label, value]) => <div key={label}><small>{label}</small><strong>{value}</strong></div>)}</div><div className="featured-buy"><strong>AED {product.price.toLocaleString()}</strong><button className="dark-button" onClick={() => addToCart(product)}>ADD TO BAG <ShoppingBag size={16} /></button></div><button className="featured-next" onClick={() => setFeaturedIndex((current) => (current + 1) % featuredRackets.length)} aria-label={`Show next featured racket`}><span>NEXT PRODUCT</span><ArrowRight size={18} /></button></div></article>)}</div><div className="featured-dots" aria-label="Featured racket slides">{featuredRackets.map((racket, index) => <button key={racket.product.id} className={featuredIndex === index ? "active" : ""} onClick={() => setFeaturedIndex(index)} aria-label={`Show ${racket.product.name}`} />)}</div></section></Reveal>
+      {featuredProducts.length > 0 && <Reveal><section className="featured-product-slider"><div className="featured-product-track" style={{ transform: `translateX(-${featuredIndex * 100}%)` }}>{featuredProducts.map((product) => <article className="featured-product" key={product.id}><div className="featured-product-image">{product.image && <img src={product.image} alt={product.name} />}<span>{product.category.toUpperCase()}</span></div><div className="featured-product-copy"><p className="eyebrow">JUST ADDED</p><div className="featured-brand">{product.brand}</div><h2>{product.name}</h2>{product.rating > 0 && <div className="featured-rating"><Star size={14} fill="currentColor" /> {product.rating} <span>({product.reviews} reviews)</span></div>}<p className="featured-description">Available now in our {product.category.toLowerCase()} collection. Check the current stock before adding it to your bag.</p><div className="featured-specs"><div><small>CATEGORY</small><strong>{product.category}</strong></div><div><small>INVENTORY</small><strong>{product.stock ?? 0} UNITS</strong></div><div><small>BRAND</small><strong>{product.brand}</strong></div></div><div className="featured-buy"><strong>AED {product.price.toLocaleString()}</strong><button className="dark-button" onClick={() => addToCart(product)} disabled={product.stock === 0}>{product.stock === 0 ? "SOLD OUT" : <>ADD TO BAG <ShoppingBag size={16} /></>}</button></div><button className="featured-next" onClick={() => setFeaturedIndex((current) => (current + 1) % featuredProducts.length)} aria-label="Show next featured product"><span>NEXT PRODUCT</span><ArrowRight size={18} /></button></div></article>)}</div><div className="featured-dots" aria-label="Featured products">{featuredProducts.map((product, index) => <button key={product.id} className={featuredIndex === index ? "active" : ""} onClick={() => setFeaturedIndex(index)} aria-label={`Show ${product.name}`} />)}</div></section></Reveal>}
 
-      <Reveal><section className="content-section products-section" id="shop"><div className="section-heading"><div><p className="eyebrow">THE EDIT</p><h2>What&apos;s <em>moving.</em></h2></div><div className="category-tabs">{['All', 'Badminton', 'Tennis', 'Squash', 'Shoes', 'Strings', 'Grips', 'Socks', 'Apparel'].map((category) => <button data-category={category} className={activeCategory === category ? 'active' : ''} key={category} onClick={() => setActiveCategory(category)}>{category}</button>)}</div></div>{query && <p className="search-note">Showing results for <strong>&ldquo;{query}&rdquo;</strong></p>}<div className="product-grid">{filteredProducts.map((product, index) => <div className="product-reveal" style={{ "--card-delay": `${index * 65}ms` } as React.CSSProperties} key={product.id}><ProductCard product={product} onAdd={addToCart} /></div>)}</div><div className="center-action"><a className="outline-button" href="#categories">EXPLORE ALL PRODUCTS <ArrowRight size={16} /></a></div></section></Reveal>
+      <Reveal><section className="content-section products-section" id="shop"><div className="section-heading"><div><p className="eyebrow">THE COLLECTION</p><h2>Shop <em>equipment.</em></h2></div><div className="category-tabs">{["All", "Badminton", "Tennis", "Squash", "Accessories"].map((category) => <button data-category={category} className={activeCategory === category ? "active" : ""} key={category} onClick={() => setActiveCategory(category)}>{category}</button>)}</div></div>{query && <p className="search-note">Showing results for <strong>&ldquo;{query}&rdquo;</strong></p>}<div className="product-grid">{!catalogLoaded ? <div className="catalog-empty">Loading products...</div> : catalogError ? <div className="catalog-empty" role="alert">{catalogError}</div> : filteredProducts.length === 0 ? <div className="catalog-empty">{products.length === 0 ? "No products are listed yet. New items will appear here when published." : "No products match your search or category."}</div> : filteredProducts.map((product, index) => <div className="product-reveal" style={{ "--card-delay": `${index * 65}ms` } as React.CSSProperties} key={product.id}><ProductCard product={product} onAdd={addToCart} /></div>)}</div></section></Reveal>
 
       <ScrollVideo src="/animation2.mp4" eyebrow="THE NEXT RALLY" title="Find your edge." description="Scroll through the motion and discover equipment made for your most committed moments." align="right" />
 
@@ -1027,31 +1081,20 @@ export default function Home() {
             </div>
 
             <div className="checkout-form">
+              <div className="checkout-customer"><UserRound size={17} /><div><strong>{customerProfile?.full_name || userName || "Customer"}</strong><span>{customerProfile?.email}</span><span>{customerProfile?.phone}</span></div></div>
               <label>
-                <span>Full Name</span>
-                <input value={checkoutForm.fullName} onChange={(event) => setCheckoutForm((current) => ({ ...current, fullName: event.target.value }))} placeholder="Your name" />
+                <span>Deliver to</span>
+                <select className="checkout-address-select" value={selectedAddressId} onChange={(event) => setSelectedAddressId(event.target.value)}>
+                  {(customerProfile?.addresses ?? []).map((address) => <option key={address.id} value={address.id}>{address.label} · {address.city}{address.is_default ? " · Default" : ""}</option>)}
+                </select>
               </label>
+              {(() => {
+                const address = customerProfile?.addresses?.find((item) => item.id === selectedAddressId);
+                return address ? <div className="checkout-address-summary"><MapPin size={15} /><span>{address.address}<br />{address.city}</span><button onClick={() => { setCheckoutOpen(false); router.push("/account"); }}>Change</button></div> : null;
+              })()}
               <label>
-                <span>Phone</span>
-                <input
-                  value={checkoutForm.phone}
-                  onChange={(event) => setCheckoutForm((current) => ({ ...current, phone: event.target.value }))}
-                  placeholder="05xxxxxxxx or +9715xxxxxxxx"
-                  inputMode="tel"
-                  autoComplete="tel"
-                />
-              </label>
-              <label>
-                <span>City</span>
-                <input value={checkoutForm.city} onChange={(event) => setCheckoutForm((current) => ({ ...current, city: event.target.value }))} placeholder="Dubai" />
-              </label>
-              <label>
-                <span>Address</span>
-                <textarea value={checkoutForm.address} onChange={(event) => setCheckoutForm((current) => ({ ...current, address: event.target.value }))} placeholder="Street, area, building" rows={3} />
-              </label>
-              <label>
-                <span>Notes</span>
-                <textarea value={checkoutForm.notes} onChange={(event) => setCheckoutForm((current) => ({ ...current, notes: event.target.value }))} placeholder="Delivery note or preferred time" rows={2} />
+                <span>Delivery note <small>Optional</small></span>
+                <textarea value={checkoutNotes} onChange={(event) => setCheckoutNotes(event.target.value)} placeholder="Anything the delivery team should know?" rows={2} />
               </label>
             </div>
 
@@ -1060,12 +1103,15 @@ export default function Home() {
                 <span>Total</span>
                 <strong>AED {cartTotal.toLocaleString()}</strong>
               </div>
-              <p>Payment details will be shared on WhatsApp after you place the order.</p>
-              <button className="dark-button full-button" onClick={handleCheckoutSubmit}>SEND VIA WHATSAPP <ArrowRight size={16} /></button>
+              <p>Your saved details and order summary will be sent to Al Raed Sports for confirmation.</p>
+              {authError && <div className="auth-error" role="alert">{authError}</div>}
+              <button className="dark-button full-button" onClick={handleCheckoutSubmit} disabled={checkoutBusy}>{checkoutBusy ? "SAVING YOUR ORDER..." : "CONFIRM & SEND VIA WHATSAPP"} <ArrowRight size={16} /></button>
             </div>
           </aside>
         </div>
       )}
+
+      {checkoutSuccess && <div className="checkout-success-toast" role="status"><span><Check size={16} /></span><div><strong>Order request sent</strong><p>{checkoutSuccess}</p></div><button onClick={() => setCheckoutSuccess(null)} aria-label="Dismiss notification"><X size={16} /></button></div>}
 
       {cartOpen && <div className="drawer-backdrop" onClick={() => setCartOpen(false)}><aside className="cart-drawer" onClick={(event) => event.stopPropagation()}><div className="drawer-heading"><div><p className="eyebrow">YOUR SELECTION</p><h2>Shopping bag <span>({cartCount})</span></h2></div><button onClick={() => setCartOpen(false)} aria-label="Close shopping bag"><X size={21} /></button></div>{cart.length === 0 ? <div className="empty-bag"><ShoppingBag size={30} /><p>Your bag is waiting.</p><span>Add something that makes you want to play.</span></div> : <><div className="drawer-items">{cart.map((item) => <div className="drawer-item" key={item.product.id}><img src={item.product.image} alt={item.product.name} /><div><strong>{item.product.brand}</strong><p>{item.product.name}</p><span>AED {(item.product.price * item.quantity).toLocaleString()}</span></div><div className="drawer-item-actions"><div className="quantity-stepper"><button onClick={() => updateQuantity(item.product.id, -1)}>-</button><span>{item.quantity}</span><button onClick={() => updateQuantity(item.product.id, 1)}>+</button></div><button aria-label="Remove item" onClick={() => setCart((current) => current.filter((cartItem) => cartItem.product.id !== item.product.id))}><X size={15} /></button></div></div>)}</div><div className="drawer-summary"><div><span>Subtotal</span><strong>AED {cartTotal.toLocaleString()}</strong></div><p>Delivery calculated at checkout.</p><button className="dark-button full-button" onClick={openCheckout}>CHECKOUT <ArrowRight size={16} /></button></div></>}</aside></div>}
     </main>

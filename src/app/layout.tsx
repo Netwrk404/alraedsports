@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AL RAED SPORTS | Premium sports equipment in the UAE",
+  title: "Al Raed Sports Commerce | Premium sports equipment in the UAE",
   description: "Premium sports equipment and essentials for players across the UAE.",
 };
 

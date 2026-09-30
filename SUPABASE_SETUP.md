@@ -45,6 +45,7 @@ create table if not exists profiles (
   full_name text,
   email text,
   phone text,
+  addresses jsonb not null default '[]'::jsonb,
   created_at timestamptz default now()
 );
 
@@ -52,9 +53,8 @@ create table if not exists products (
   id bigserial primary key,
   name text not null,
   brand text,
-  category text,
+  category text check (category in ('Badminton', 'Tennis', 'Squash', 'Accessories')),
   price numeric(10,2) not null,
-  old_price numeric(10,2),
   image_url text,
   rating numeric(3,2) default 0,
   reviews integer default 0,
@@ -87,21 +87,23 @@ create table if not exists order_items (
 );
 ```
 
-## 4) Add sample products
+## 4) Start with an empty storefront
 
-Paste this into SQL editor:
+The storefront reads active products from the `products` table. To hide existing products while keeping their records and order history, run this once in SQL Editor:
 
 ```sql
-insert into products (
-  name, brand, category, price, old_price, image_url, rating, reviews, stock, is_active
-)
-values
-  ('Astrox 100 Tour', 'YONEX', 'Badminton', 649, 729, 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=900&q=85', 4.9, 28, 12, true),
-  ('Blade 98 v9', 'WILSON', 'Tennis', 799, null, 'https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?auto=format&fit=crop&w=900&q=85', 4.8, 16, 8, true),
-  ('Power Cushion 65 Z3', 'YONEX', 'Shoes', 529, null, 'https://images.unsplash.com/photo-1552346154-21d32810aba3?auto=format&fit=crop&w=900&q=85', 4.8, 18, 15, true);
+update products set is_active = false where is_active = true;
 ```
 
-## 5) Add row-level security policies
+Hidden products remain in admin and can be published again. New products are published automatically after saving.
+
+## 5) Product images
+
+The admin upload accepts JPG, PNG, and WebP files up to 5 MB. Images are stored in the public Supabase Storage bucket `product-images`; the `products.image_url` column stores only the image URL. The bucket is created automatically on the first authenticated admin upload.
+
+This keeps image bytes out of Postgres, avoids inflating database backups, and lets the browser fetch images from object storage. Compress images before upload for faster storefront loading.
+
+## 6) Add row-level security policies
 
 For public product browsing:
 
@@ -122,128 +124,36 @@ alter table order_items enable row level security;
 
 Then define server-side insertion logic in API routes; do not allow public insert from browser anon key.
 
-## 6) Create a server order API route
+## 7) Apply existing-project migrations
 
-In Next.js, create a route such as:
+For an existing database, run these files in the Supabase SQL Editor, in order:
 
-`src/app/api/orders/route.ts`
+1. `SUPABASE_ACCOUNT_MIGRATION.sql`
+2. `SUPABASE_ORDER_SAFETY_MIGRATION.sql`
 
-Example:
+The first migration adds saved customer addresses. The second adds server-only database functions that create orders using current Supabase product names/prices and atomically mark paid orders while deducting inventory. Checkout and payment processing will return an error until the second migration has been applied.
 
-```ts
-import { createClient } from "@supabase/supabase-js";
-import { NextResponse } from "next/server";
+Do not use a client-provided price to create orders. The existing `/api/orders` route sends only product IDs and quantities to the database function. The service role key must remain server-only.
 
-export async function POST(request: Request) {
-  const body = await request.json();
+## 8) Production readiness checks
 
-  const { products, customerName, customerPhone, city, address, notes } = body;
+Before launch, test these flows against the intended Supabase project:
 
-  const total = products.reduce((sum: number, item: any) => {
-    return sum + Number(item.product.price) * Number(item.quantity);
-  }, 0);
+1. Publish a product with a known stock quantity and confirm it appears on the storefront.
+2. Place an order and confirm the database total uses the product's current database price.
+3. Mark the order paid and confirm each product stock is deducted once.
+4. Repeat the paid update and confirm stock does not change a second time.
+5. Try an order with insufficient stock and confirm it is rejected without changing the order or inventory.
+6. Cancel an order and verify the agreed manual stock-restock process.
 
-  const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+The current manual-payment flow sends the order request to WhatsApp, where the customer and store agree on payment and fulfilment. Stock is deducted only when the admin confirms the order as paid. Unpaid orders do not reserve inventory, so check availability before confirming payment if inventory is limited.
 
-  const { data: order, error: orderError } = await supabaseAdmin
-    .from("orders")
-    .insert({
-      customer_name: customerName,
-      customer_phone: customerPhone,
-      city,
-      address,
-      notes,
-      total,
-      status: "pending",
-    })
-    .select()
-    .single();
-
-  if (orderError) {
-    return NextResponse.json({ error: orderError.message }, { status: 400 });
-  }
-
-  const orderItems = products.map((item: any) => ({
-    order_id: order.id,
-    product_id: item.product.id,
-    product_name: item.product.name,
-    quantity: item.quantity,
-    unit_price: item.product.price,
-  }));
-
-  const { error: itemError } = await supabaseAdmin.from("order_items").insert(orderItems);
-
-  if (itemError) {
-    return NextResponse.json({ error: itemError.message }, { status: 400 });
-  }
-
-  return NextResponse.json({ success: true, orderId: order.id });
-}
-```
-
-## 7) Connect your checkout form to the API
-
-In the frontend checkout flow, before opening WhatsApp, call the API:
-
-```ts
-const response = await fetch("/api/orders", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-    products: cart,
-    customerName: checkoutForm.fullName,
-    customerPhone: checkoutForm.phone,
-    city: checkoutForm.city,
-    address: checkoutForm.address,
-    notes: checkoutForm.notes,
-  }),
-});
-
-const result = await response.json();
-```
-
-Then open WhatsApp to the company number `0504848236` with the order details.
-
-## 8) Test the flow
-
-1. Add a product to cart
-2. Login with Google
-3. Proceed to checkout
-4. Fill in name, phone, address, city
-5. Click send via WhatsApp
-6. Confirm order payload is created in Supabase
-7. Confirm a new row exists in `orders`
-8. Confirm matching rows exist in `order_items`
-
-## 9) Optional later: admin page
-
-Later you can create a dashboard page to view orders:
-
-- `/admin/orders`
-- read from `orders`
-- join with `order_items`
-- show status, total, customer, created date
-
-## 10) When you are ready for real ecommerce
-
-Future upgrades:
-- stock checking
-- inventory updates
-- order status management
-- admin approval dashboard
-- Stripe or other payment integration
+The service role key must be configured as a server-only environment variable in the production host. Never prefix it with `NEXT_PUBLIC_` or include it in browser code.
 
 ## Summary
 
-Your exact stack is:
-- Firebase Auth = Google login
-- Supabase = product and order database
-- WhatsApp = confirmation to business number
-- Next.js API = secure order insertion
-
-This is the correct setup for your current business flow.
+- Firebase Auth handles Google sign-in.
+- Supabase stores products, customer profiles, and orders.
+- Supabase Storage stores uploaded product images.
+- The Next.js server creates orders from database prices and validates stock.
+- WhatsApp is used to coordinate payment manually.
