@@ -369,7 +369,7 @@ body { background: #090b0f; color: #f5f7fa; }
 .ar-announcement button { align-items: center; background: transparent; border: 0; color: inherit; cursor: pointer; display: inline-flex; padding: 5px; }
 .ar-header { align-items: center; background: rgba(9,11,15,.95); border-bottom: 1px solid rgba(255,255,255,.07); display: flex; gap: clamp(20px, 3vw, 48px); height: 98px; justify-content: space-between; padding: 0 clamp(22px, 5.4vw, 88px); position: relative; z-index: 20; }
 .ar-wordmark { align-items: center; display: inline-flex; flex: 0 0 auto; gap: 11px; }
-.ar-brand-logo { background: #0b1428; border: 1px solid rgba(169,209,255,.22); border-radius: 50%; flex: 0 0 auto; height: 39px; object-fit: cover; padding: 3px; width: 39px; }
+.ar-brand-logo { background: #0b1428; border: 1px solid rgba(169,209,255,.22); border-radius: 50%; flex: 0 0 auto; height: 48px; object-fit: cover; padding: 3px; width: 48px; }
 .ar-wordmark > span:last-child { font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 700; letter-spacing: -.065em; line-height: .95; }
 .ar-wordmark small { color: #8695a7; display: block; font-family: 'DM Sans', sans-serif; font-size: 8px; font-weight: 600; letter-spacing: .28em; margin-top: 6px; }
 .ar-mark { align-items: center; border: 1px solid rgba(169,209,255,.68); border-radius: 50%; color: var(--ar-blue); display: inline-flex; font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 700; height: 39px; justify-content: center; letter-spacing: -.08em; width: 39px; }
@@ -628,7 +628,7 @@ body { background: #090b0f; color: #f5f7fa; }
 .ar-brand-marquee-track i { font-size: 10px; font-style: normal; opacity: .5; }
 .ar-footer-rich { align-items: start; gap: 38px; grid-template-columns: minmax(145px, 1.05fr) repeat(3, minmax(100px, .72fr)) minmax(180px, 1.2fr); padding: 62px clamp(26px, 7.5vw, 112px) 20px; }
 .ar-footer-brand .ar-footer-logo { margin-bottom: 18px; }
-.ar-footer-logo .ar-brand-logo { height: 54px; width: 54px; }
+.ar-footer-logo .ar-brand-logo { height: 62px; width: 62px; }
 .ar-footer-brand > p { color: #e3e8ef; font-family: 'Space Grotesk', sans-serif; font-size: 12px; letter-spacing: -.03em; line-height: 1.5; margin: 0; }
 .ar-footer-brand > p span { color: #818d9c; font-family: 'DM Sans', sans-serif; font-size: 9px; }
 .ar-footer-column { align-items: flex-start; display: flex; flex-direction: column; gap: 12px; }
@@ -697,6 +697,7 @@ body { background: #090b0f; color: #f5f7fa; }
 	.ar-wordmark { gap: 8px; }
 	.ar-wordmark > span:last-child { font-size: 13px; }
 	.ar-mark { height: 34px; width: 34px; }
+	.ar-header .ar-brand-logo { height: 40px; width: 40px; }
 	.ar-nav { align-items: stretch; background: #10151d; border-bottom: 1px solid #303944; box-shadow: 0 18px 35px rgba(0,0,0,.3); display: none; flex-direction: column; gap: 0; height: auto; left: 0; max-height: calc(100svh - 112px); overflow-y: auto; overscroll-behavior: contain; padding: 12px 22px 22px; position: absolute; right: 0; top: 73px; }
 	.ar-nav.is-open { display: flex; }
 	.ar-nav-dropdown, .ar-nav-dropdown > summary { height: auto; }
@@ -829,7 +830,7 @@ body { background: #090b0f; color: #f5f7fa; }
 	.ar-header-actions { gap: 10px; }
 	.ar-wordmark > span:last-child { font-size: 11px; }
 	.ar-mark { font-size: 13px; height: 31px; width: 31px; }
-	.ar-brand-logo { height: 31px; width: 31px; }
+	.ar-brand-logo { height: 36px; width: 36px; }
 	.ar-bag-button { font-size: 7px; }
 	.ar-bag-button > svg { height: 17px; width: 17px; }
 	.ar-subnav { padding-left: 13px; padding-right: 13px; }
