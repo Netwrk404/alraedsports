@@ -444,7 +444,7 @@ export default function Home() {
 
       <header className="ar-header">
         <button className="ar-mobile-menu" type="button" aria-label="Open menu" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <X /> : <Menu />}</button>
-        <Link className="ar-wordmark" href="/" aria-label="Al Raed Sports home"><span className="ar-mark">AR</span><span>AL RAED<small>SPORTS</small></span></Link>
+        <Link className="ar-wordmark" href="/" aria-label="Al Raed Sports home"><img className="ar-brand-logo" src="/IMG_8477.jpg%2010-33-16-710.jpg" alt="" /><span>AL RAED<small>SPORTS</small></span></Link>
         <nav className={`ar-nav ${menuOpen ? "is-open" : ""}`} aria-label="Main navigation" ref={navRef}>
           <details className="ar-nav-dropdown ar-shop-dropdown">
             <summary>SHOP <ChevronDown size={13} /></summary>
@@ -585,7 +585,7 @@ export default function Home() {
 
       <footer className="ar-footer ar-footer-rich">
         <div className="ar-footer-brand">
-          <Link className="ar-wordmark ar-footer-logo" href="/" aria-label="Al Raed Sports home"><span className="ar-mark">AR</span><span>AL RAED<small>SPORTS</small></span></Link>
+          <Link className="ar-wordmark ar-footer-logo" href="/" aria-label="Al Raed Sports home"><img className="ar-brand-logo" src="/IMG_8477.jpg%2010-33-16-710.jpg" alt="" /><span>AL RAED<small>SPORTS</small></span></Link>
           <p>Premium sports equipment<br /><span>for the UAE in motion.</span></p>
         </div>
         <nav className="ar-footer-column" aria-label="Shop links">

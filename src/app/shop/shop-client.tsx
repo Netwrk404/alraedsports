@@ -309,7 +309,7 @@ export default function ShopClient({ initialCategory, initialQuery }: { initialC
     <main className="ar-store ar-shop-page">
       <div className="ar-announcement"><span>MADE FOR THE UAE</span><span>·</span><span>FREE DELIVERY ON ORDERS OVER AED 200</span></div>
       <header className="ar-header ar-shop-header">
-        <Link className="ar-wordmark" href="/" aria-label="Al Raed Sports home"><span className="ar-mark">AR</span><span>AL RAED<small>SPORTS</small></span></Link>
+        <Link className="ar-wordmark" href="/" aria-label="Al Raed Sports home"><img className="ar-brand-logo" src="/IMG_8477.jpg%2010-33-16-710.jpg" alt="" /><span>AL RAED<small>SPORTS</small></span></Link>
         <nav className="ar-shop-header-nav" aria-label="Shop categories">
           <Link href="/shop" className={category === "All" ? "is-active" : ""}>ALL GEAR</Link>
           {categories.slice(1).map((item) => <Link href={`/shop?category=${encodeURIComponent(item)}`} className={category === item ? "is-active" : ""} key={item}>{item.toUpperCase()}</Link>)}
@@ -389,7 +389,7 @@ export default function ShopClient({ initialCategory, initialQuery }: { initialC
         </section>
       </div>
 
-      <footer className="ar-shop-footer"><Link className="ar-wordmark" href="/"><span className="ar-mark">AR</span><span>AL RAED<small>SPORTS</small></span></Link><p>For the love of the rally.<br /><span>Made for players across the UAE.</span></p><Link href="/">BACK TO THE STOREFRONT <ArrowUpRight size={14} /></Link></footer>
+      <footer className="ar-shop-footer"><Link className="ar-wordmark" href="/"><img className="ar-brand-logo" src="/IMG_8477.jpg%2010-33-16-710.jpg" alt="" /><span>AL RAED<small>SPORTS</small></span></Link><p>For the love of the rally.<br /><span>Made for players across the UAE.</span></p><Link href="/">BACK TO THE STOREFRONT <ArrowUpRight size={14} /></Link></footer>
 
       <ProductDetailDialog key={selectedProduct?.id ?? "closed"} product={selectedProduct} onClose={() => setSelectedProduct(null)} onAdd={(product, quantity) => {
         if (addToCart(product, quantity)) {
