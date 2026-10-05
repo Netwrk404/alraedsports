@@ -1,0 +1,162 @@
+{
+  "[TEST] Astrox 100 ZZ Tour": {
+    "description": "A head-heavy attack-oriented badminton racquet concept for players who like to load power into steep smashes. Its demo profile pairs a compact-feeling frame with a firm, direct response for confident rear-court play.",
+    "specifications": [["Sport", "Badminton"], ["Racquet balance", "Head heavy"], ["Flex profile", "Stiff"], ["Suggested level", "Advanced"], ["Frame concept", "Graphite composite"]]
+  },
+  "[TEST] Nanoflare 800 Pro": {
+    "description": "A fast-handling badminton racquet concept built around quick preparation and sharp drives. The even, aerodynamic feel suits players who want to transition quickly between defence, flat exchanges and counter-attacks.",
+    "specifications": [["Sport", "Badminton"], ["Racquet balance", "Head light"], ["Flex profile", "Stiff"], ["Suggested level", "Advanced"], ["Frame concept", "Graphite composite"]]
+  },
+  "[TEST] Arcsaber 11 Pro": {
+    "description": "A control-focused badminton racquet concept designed for composed rallies and precise placement. Its balanced feel is intended to keep the shuttle connected through the stroke, making changes of pace and direction feel deliberate.",
+    "specifications": [["Sport", "Badminton"], ["Racquet balance", "Even balanced"], ["Flex profile", "Medium stiff"], ["Suggested level", "Intermediate to advanced"], ["Frame concept", "Graphite composite"]]
+  },
+  "[TEST] Auraspeed 100X": {
+    "description": "A speed-first badminton racquet concept for players who thrive on fast exchanges. The streamlined profile favours crisp handling at the net and through the mid-court without losing confidence when stepping into an attacking shot.",
+    "specifications": [["Sport", "Badminton"], ["Racquet balance", "Even balanced"], ["Flex profile", "Stiff"], ["Suggested level", "Intermediate to advanced"], ["Frame concept", "Carbon composite"]]
+  },
+  "[TEST] Thruster Ryuga II Pro": {
+    "description": "An attacking badminton racquet concept with a weight-forward feel for players building pressure from the back court. A firm shaft profile is paired with a stable frame concept to support committed overhead strokes.",
+    "specifications": [["Sport", "Badminton"], ["Racquet balance", "Head heavy"], ["Flex profile", "Stiff"], ["Suggested level", "Advanced"], ["Frame concept", "Carbon composite"]]
+  },
+  "[TEST] DriveX 9X": {
+    "description": "A versatile badminton racquet concept that balances quick reactions with controlled power. Designed for players who move between front- and back-court roles and want one dependable feel across the whole rally.",
+    "specifications": [["Sport", "Badminton"], ["Racquet balance", "Even balanced"], ["Flex profile", "Medium"], ["Suggested level", "Intermediate"], ["Frame concept", "Carbon composite"]]
+  },
+  "[TEST] Aerosensa 50 Feather Shuttlecocks": {
+    "description": "A feather-shuttle test listing for club sessions and match-play practice. The product card represents a consistent-flight shuttle option for players who prefer the feel and touch of feather over nylon.",
+    "specifications": [["Sport", "Badminton"], ["Type", "Feather shuttlecock"], ["Pack format", "Tube"], ["Use", "Club and match practice"], ["Flight", "Speed to be selected for venue"]]
+  },
+  "[TEST] Power Cushion Aerus Z Court Shoes": {
+    "description": "A lightweight indoor-court shoe concept for badminton footwork, with a low-profile feel for quick direction changes. The demo spec focuses on lateral support, court grip and cushioning for repeated movement.",
+    "specifications": [["Sport", "Badminton"], ["Sole", "Non-marking indoor court"], ["Fit", "Court performance fit"], ["Upper", "Breathable synthetic mesh"], ["Use", "Indoor court"]]
+  },
+  "[TEST] Team Match Court Shoes": {
+    "description": "A supportive all-round indoor-court shoe concept for training and regular club play. Its demo profile prioritises reliable grip, a secure fit and comfortable cushioning through repeated rallies.",
+    "specifications": [["Sport", "Badminton"], ["Sole", "Non-marking indoor court"], ["Fit", "Supportive court fit"], ["Upper", "Mesh and synthetic overlays"], ["Use", "Training and club play"]]
+  },
+  "[TEST] Performance Racquet Backpack": {
+    "description": "A court-ready backpack concept with room for a racquet and everyday training essentials. A practical choice for players travelling light between work, practice and match night.",
+    "specifications": [["Sport", "Badminton"], ["Carry style", "Backpack"], ["Storage", "Racquet and kit compartments"], ["Closure", "Zip compartments"], ["Use", "Training and commute"]]
+  },
+  "[TEST] Pure Aero 2026": {
+    "description": "A spin-oriented tennis racquet concept for players who accelerate through the ball and create heavy, high-rotating shots. Its demo character favours aggressive baseline patterns and confident racquet-head speed.",
+    "specifications": [["Sport", "Tennis"], ["Racquet balance", "Head light"], ["String pattern", "16 x 19 concept"], ["Suggested level", "Intermediate to advanced"], ["Frame concept", "Graphite composite"]]
+  },
+  "[TEST] Blade 98 v9 16x19": {
+    "description": "A precision-minded tennis racquet concept with a responsive feel for players who like to shape their own shots. The open string-pattern profile is suited to spin access while retaining directional control.",
+    "specifications": [["Sport", "Tennis"], ["Head size", "98 sq in concept"], ["String pattern", "16 x 19"], ["Suggested level", "Advanced"], ["Frame concept", "Graphite composite"]]
+  },
+  "[TEST] Speed MP 2026": {
+    "description": "A balanced tennis racquet concept for all-court players looking for a blend of pace, control and manoeuvrability. It is positioned as a versatile option for building points from the baseline and moving forward.",
+    "specifications": [["Sport", "Tennis"], ["Head size", "100 sq in concept"], ["String pattern", "16 x 19 concept"], ["Suggested level", "Intermediate to advanced"], ["Frame concept", "Graphite composite"]]
+  },
+  "[TEST] Ezone 100": {
+    "description": "A comfortable power-oriented tennis racquet concept for players who want a generous hitting area and easy depth. Its demo profile balances accessible response with the control needed to play confidently from the baseline.",
+    "specifications": [["Sport", "Tennis"], ["Head size", "100 sq in concept"], ["String pattern", "16 x 19 concept"], ["Suggested level", "Beginner to intermediate"], ["Frame concept", "Graphite composite"]]
+  },
+  "[TEST] Clash 100 v3": {
+    "description": "A flexible-feeling tennis racquet concept aimed at comfortable all-court play. The demo setup focuses on accessible handling and a forgiving response for players who value feel as much as easy power.",
+    "specifications": [["Sport", "Tennis"], ["Head size", "100 sq in concept"], ["String pattern", "16 x 19 concept"], ["Suggested level", "Beginner to intermediate"], ["Frame concept", "Flexible graphite composite"]]
+  },
+  "[TEST] CX 200 Tour": {
+    "description": "A control-led tennis racquet concept for experienced players who bring their own pace and value clean feedback. The compact profile rewards early preparation and accurate contact.",
+    "specifications": [["Sport", "Tennis"], ["Head size", "95 sq in concept"], ["String pattern", "16 x 19 concept"], ["Suggested level", "Advanced"], ["Frame concept", "Graphite composite"]]
+  },
+  "[TEST] US Open Extra Duty Balls": {
+    "description": "A durable tennis-ball test listing for hard-court sessions. The extra-duty felt concept is intended for repeated practice and dependable visibility against blue or green court surfaces.",
+    "specifications": [["Sport", "Tennis"], ["Type", "Pressurised tennis balls"], ["Court surface", "Hard court"], ["Pack format", "3-ball can concept"], ["Use", "Practice and match play"]]
+  },
+  "[TEST] Pro Court Tennis Shoes": {
+    "description": "A stable tennis shoe concept for players who slide, recover and change direction across the court. The demo design emphasises lateral support, durable tread and a secure fit for longer sessions.",
+    "specifications": [["Sport", "Tennis"], ["Sole", "Tennis court outsole"], ["Fit", "Secure performance fit"], ["Upper", "Breathable mesh with support overlays"], ["Use", "Hard-court training"]]
+  },
+  "[TEST] Match Day Racket Bag 6R": {
+    "description": "A tennis bag concept sized for match-day racquets, shoes and personal essentials. Separate storage zones help keep clean kit organised and ready for the next court booking.",
+    "specifications": [["Sport", "Tennis"], ["Carry style", "Racquet bag"], ["Capacity", "6-racquet class"], ["Storage", "Main and accessory compartments"], ["Use", "Practice and match day"]]
+  },
+  "[TEST] Pro Tour Racket Cover": {
+    "description": "A protective cover concept for carrying a tennis racquet between home, club and court. A simple, lightweight option for keeping the frame separate from the rest of your kit.",
+    "specifications": [["Sport", "Tennis"], ["Type", "Racquet cover"], ["Capacity", "1 racquet"], ["Closure", "Full-length zip concept"], ["Use", "Storage and transport"]]
+  },
+  "[TEST] Carboflex X-Top V2": {
+    "description": "A manoeuvrable squash-racquet concept for players who build fast attacking rallies and need quick preparation in tight spaces. The demo profile favours acceleration, touch and sharp volleying.",
+    "specifications": [["Sport", "Squash"], ["Racquet balance", "Head light"], ["Weight class", "125 g concept"], ["Suggested level", "Intermediate to advanced"], ["Frame concept", "Graphite composite"]]
+  },
+  "[TEST] Sonic Core Revelation 125": {
+    "description": "A versatile squash-racquet concept combining manageable weight with a steady all-round feel. Suited to club players seeking a useful blend of control, access to pace and comfortable handling.",
+    "specifications": [["Sport", "Squash"], ["Racquet balance", "Even balanced"], ["Weight class", "125 g concept"], ["Suggested level", "Intermediate"], ["Frame concept", "Graphite composite"]]
+  },
+  "[TEST] Raw 120 Squash Racket": {
+    "description": "A lightweight squash-racquet concept for players who favour fast hands and responsive movement around the T. Its demo balance supports quick volleys and rapid changes of direction.",
+    "specifications": [["Sport", "Squash"], ["Racquet balance", "Head light"], ["Weight class", "120 g concept"], ["Suggested level", "Intermediate to advanced"], ["Frame concept", "Graphite composite"]]
+  },
+  "[TEST] Speed 135 SB": {
+    "description": "A stable squash-racquet concept with a slightly more substantial feel through contact. A considered option for developing players who want confidence on drives and a predictable response under pressure.",
+    "specifications": [["Sport", "Squash"], ["Racquet balance", "Even balanced"], ["Weight class", "135 g concept"], ["Suggested level", "Beginner to intermediate"], ["Frame concept", "Graphite composite"]]
+  },
+  "[TEST] Carboflex 125 X-Speed": {
+    "description": "A quick-moving squash-racquet concept for players who like to take the ball early. The demo setup aims for responsive acceleration while keeping enough stability for length and counter-drop play.",
+    "specifications": [["Sport", "Squash"], ["Racquet balance", "Head light"], ["Weight class", "125 g concept"], ["Suggested level", "Intermediate to advanced"], ["Frame concept", "Graphite composite"]]
+  },
+  "[TEST] Hyperfibre+ Evolution Pro": {
+    "description": "A competition-inspired squash-racquet concept for precise shot-makers who want a firm, connected response. Its demo character is suited to players comfortable generating racquet-head speed.",
+    "specifications": [["Sport", "Squash"], ["Racquet balance", "Head light"], ["Weight class", "120 g concept"], ["Suggested level", "Advanced"], ["Frame concept", "Carbon composite"]]
+  },
+  "[TEST] Pro XX Squash Balls": {
+    "description": "A double-yellow-dot squash-ball test listing for players accustomed to match pace and a longer warm-up. The demo pack is positioned for experienced club sessions and competitive play.",
+    "specifications": [["Sport", "Squash"], ["Type", "Double yellow dot"], ["Pack format", "Single ball concept"], ["Bounce", "Low competition bounce"], ["Use", "Advanced and match play"]]
+  },
+  "[TEST] PU Super Grip": {
+    "description": "A cushioned replacement grip concept designed to refresh racquet feel and improve comfort through long sessions. A straightforward maintenance essential for squash players.",
+    "specifications": [["Sport", "Squash"], ["Type", "Replacement grip"], ["Material", "PU synthetic"], ["Feel", "Cushioned"], ["Pack format", "Single grip"]]
+  },
+  "[TEST] X.Lite 115 Racket": {
+    "description": "A lightweight squash-racquet concept focused on fast handling and easy manoeuvrability. Its forgiving demo profile suits players developing confident technique and quick reactions.",
+    "specifications": [["Sport", "Squash"], ["Racquet balance", "Head light"], ["Weight class", "115 g concept"], ["Suggested level", "Beginner to intermediate"], ["Frame concept", "Graphite composite"]]
+  },
+  "[TEST] Match Racket Cover": {
+    "description": "A protective squash-racquet cover concept for keeping your frame safe in a kit bag or during transport. Compact storage for the racquet you reach for most.",
+    "specifications": [["Sport", "Squash"], ["Type", "Racquet cover"], ["Capacity", "1 squash racquet"], ["Closure", "Zip concept"], ["Use", "Storage and transport"]]
+  },
+  "[TEST] Tournament Feather Shuttlecocks": {
+    "description": "A feather-shuttle accessory test listing intended to demonstrate a match-ready badminton consumable. Select the right speed grade for local temperature, altitude and playing conditions.",
+    "specifications": [["Sport", "Badminton"], ["Type", "Feather shuttlecock"], ["Pack format", "Tube concept"], ["Use", "Training and match play"], ["Selection note", "Choose speed for venue conditions"]]
+  },
+  "[TEST] Championship Squash Balls": {
+    "description": "A squash-ball accessory test listing for regular club play. The demo product is positioned as a reliable practice option; choose dot speed to suit player level and court conditions.",
+    "specifications": [["Sport", "Squash"], ["Type", "Squash ball"], ["Pack format", "Single ball concept"], ["Options", "Dot speed varies by level"], ["Use", "Practice and match play"]]
+  },
+  "[TEST] Championship Tennis Balls": {
+    "description": "A tennis-ball accessory test listing for drills, coaching and friendly sets. The pressurised-ball concept provides a familiar bounce for general-purpose court sessions.",
+    "specifications": [["Sport", "Tennis"], ["Type", "Pressurised tennis ball"], ["Pack format", "3-ball can concept"], ["Court surface", "All-court concept"], ["Use", "Practice and recreational play"]]
+  },
+  "[TEST] Pro Grip Overwrap 12-Pack": {
+    "description": "A multi-pack of overgrip concepts for refreshing a racquet handle and keeping a dependable feel between sessions. Thin wrapping helps tune comfort without substantially changing grip size.",
+    "specifications": [["Sport", "Multi-racquet"], ["Type", "Overgrip"], ["Pack format", "12 grips"], ["Feel", "Tacky comfort"], ["Use", "Racquet handle refresh"]]
+  },
+  "[TEST] Court Crew Cushioned Socks": {
+    "description": "A cushioned court-sock concept designed for comfortable movement through training and match play. The crew height offers extra coverage above the shoe collar.",
+    "specifications": [["Sport", "Multi-court"], ["Height", "Crew"], ["Cushioning", "Targeted sole concept"], ["Material", "Cotton blend concept"], ["Pack format", "Pair"]]
+  },
+  "[TEST] Training Wristbands 2-Pack": {
+    "description": "A two-piece wristband concept to help manage sweat during intense rallies and training blocks. A small comfort essential that is easy to keep in your racquet bag.",
+    "specifications": [["Sport", "Multi-court"], ["Type", "Wristband"], ["Pack format", "2 pieces"], ["Material", "Stretch terry concept"], ["Use", "Sweat management"]]
+  },
+  "[TEST] Insulated Court Bottle 750ml": {
+    "description": "A reusable bottle concept sized for court-side hydration. The insulated design is intended to keep drinks comfortable during a training session while fitting easily into a sports bag.",
+    "specifications": [["Sport", "Multi-court"], ["Capacity", "750 ml"], ["Type", "Insulated reusable bottle"], ["Closure", "Screw cap concept"], ["Use", "Training and court side"]]
+  },
+  "[TEST] Tournament Racket Bag 6-Pack": {
+    "description": "A roomy multi-racquet bag concept for tournament days, training gear and court essentials. Dedicated sections make it easier to separate racquets, apparel and smaller accessories.",
+    "specifications": [["Sport", "Multi-racquet"], ["Type", "Racquet bag"], ["Capacity", "6-racquet class"], ["Storage", "Main and accessory sections"], ["Carry", "Shoulder straps concept"]]
+  },
+  "[TEST] Essential Kit Duffel": {
+    "description": "A versatile duffel concept for carrying court shoes, clothing, a towel and post-match essentials. The straightforward format works for daily training and weekend fixtures.",
+    "specifications": [["Sport", "Multi-court"], ["Type", "Training duffel"], ["Storage", "Main compartment and pockets"], ["Carry", "Hand and shoulder concept"], ["Use", "Training and travel"]]
+  },
+  "[TEST] Microfibre Court Towel": {
+    "description": "A lightweight microfibre towel concept for wiping down between games and refreshing after training. It folds compactly and is easy to keep close in a court bag.",
+    "specifications": [["Sport", "Multi-court"], ["Type", "Microfibre towel"], ["Texture", "Soft quick-dry concept"], ["Pack format", "Single towel"], ["Use", "Training and match day"]]
+  }
+}

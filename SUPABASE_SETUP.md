@@ -135,7 +135,17 @@ The first migration adds saved customer addresses. The second adds server-only d
 
 Do not use a client-provided price to create orders. The existing `/api/orders` route sends only product IDs and quantities to the database function. The service role key must remain server-only.
 
-## 8) Production readiness checks
+## 8) Seed test catalog
+
+To add 10 clearly labeled test products per category, set `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in `.env.local`, then run:
+
+```sh
+npm run seed:test-products
+```
+
+The script checks that all 40 Unsplash stock images are available, skips products already seeded by name, and verifies the active count in each category. Products are marked `[TEST]`, have working stock quantities, and are active and orderable; use a non-production Supabase project when testing.
+
+## 9) Production readiness checks
 
 Before launch, test these flows against the intended Supabase project:
 

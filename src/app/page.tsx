@@ -1,47 +1,130 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import ProductDetailDialog from "@/components/storefront/ProductDetailDialog";
+import { mapStoreProduct, type CartLine, type StoreProduct } from "@/lib/store-products";
 import {
+  ArrowDown,
+  ArrowLeft,
   ArrowRight,
+  ArrowUpRight,
   Check,
+  ChevronDown,
+  ChevronLeft,
   ChevronRight,
   Heart,
   Menu,
-  MapPin,
+  Minus,
   Plus,
   Search,
   ShoppingBag,
-  Star,
-  UserRound,
+  Sparkles,
   X,
 } from "lucide-react";
-import AthleteShowcase from "./AthleteShowcase";
-import { auth, firebaseEnabled, signInWithGoogle, subscribeToAuth } from "@/lib/firebase";
 
-type CustomerAddress = { id: string; label: string; city: string; address: string; is_default: boolean };
-type CustomerProfile = { full_name: string | null; email: string | null; phone: string | null; addresses: CustomerAddress[] | null };
-
-function Reveal({ children, className = "", delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
-  const elementRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const element = elementRef.current;
-    if (!element) return;
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        element.classList.add("is-visible");
-        observer.unobserve(element);
-      }
-    }, { threshold: 0.14 });
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, []);
-
-  return <div ref={elementRef} className={`reveal ${className}`} style={{ "--reveal-delay": `${delay}ms` } as React.CSSProperties}>{children}</div>;
+function isCartLine(value: unknown): value is CartLine {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
+  const line = value as Record<string, unknown>;
+  const product = line.product;
+  if (typeof product !== "object" || product === null || Array.isArray(product)) return false;
+  const item = product as Record<string, unknown>;
+  return typeof line.quantity === "number"
+    && Number.isSafeInteger(line.quantity)
+    && line.quantity > 0
+    && typeof item.id === "number"
+    && Number.isSafeInteger(item.id)
+    && typeof item.name === "string"
+    && typeof item.brand === "string"
+    && typeof item.category === "string"
+    && typeof item.price === "number"
+    && Number.isFinite(item.price)
+    && typeof item.image === "string"
+    && typeof item.rating === "number"
+    && Number.isFinite(item.rating)
+    && typeof item.reviews === "number"
+    && Number.isSafeInteger(item.reviews)
+    && typeof item.stock === "number"
+    && Number.isSafeInteger(item.stock);
 }
 
-function ScrollVideo({ src, eyebrow, title, description, align = "left" }: { src: string; eyebrow: string; title: string; description: string; align?: "left" | "right" }) {
+const categories = [
+  { name: "Badminton", note: "Find your flight", image: "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=900&q=85" },
+  { name: "Tennis", note: "Own the court", image: "https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?auto=format&fit=crop&w=900&q=85" },
+  { name: "Squash", note: "Play at pace", image: "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=900&q=85" },
+  { name: "Accessories", note: "The little things", image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=900&q=85" },
+];
+
+const campaigns = [
+  {
+    eyebrow: "THE COURT IS YOURS",
+    title: <>Find your<br /><em>next level.</em></>,
+    description: "Good gear changes the game. Find the kit that feels like it was made for yours.",
+    cta: "SHOP THE COLLECTION",
+    image: "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=2200&q=90",
+    label: "BUILT FOR YOUR GAME",
+  },
+  {
+    eyebrow: "MADE TO MOVE",
+    title: <>Play with<br /><em>purpose.</em></>,
+    description: "Meet the latest court-ready arrivals, selected for players who never stand still.",
+    cta: "DISCOVER WHAT'S NEW",
+    image: "https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?auto=format&fit=crop&w=2200&q=90",
+    label: "NEW SEASON · NEW ENERGY",
+  },
+  {
+    eyebrow: "YOUR GAME. YOUR RULES.",
+    title: <>Better days<br /><em>start here.</em></>,
+    description: "From first serve to match point, get everything you need to make it count.",
+    cta: "FIND YOUR SPORT",
+    image: "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=2200&q=90",
+    label: "MADE FOR UAE COURTS",
+  },
+];
+
+const money = (amount: number) =>
+  new Intl.NumberFormat("en-AE", { style: "currency", currency: "AED", maximumFractionDigits: 0 }).format(amount);
+
+function ProductTile({
+  product,
+  liked,
+  onLike,
+  onAdd,
+  onView,
+  added,
+}: {
+  product: StoreProduct;
+  liked: boolean;
+  onLike: (id: number) => void;
+  onAdd: (product: StoreProduct) => void;
+  onView: (product: StoreProduct) => void;
+  added: boolean;
+}) {
+  return (
+    <article className="ar-product">
+      <div className="ar-product-image">
+        {product.image ? <img src={product.image} alt={product.name} loading="lazy" /> : <span className="ar-product-placeholder">AL RAED<br />SPORTS</span>}
+        <button className="ar-product-open" type="button" onClick={() => onView(product)} aria-label={`View details for ${product.name}`} />
+        {product.stock <= 3 && product.stock > 0 && <span className="ar-product-badge">LOW STOCK</span>}
+        <button className={`ar-wishlist ${liked ? "is-liked" : ""}`} type="button" onClick={() => onLike(product.id)} aria-label={`${liked ? "Remove" : "Add"} ${product.name} ${liked ? "from" : "to"} wishlist`}>
+          <Heart size={18} fill={liked ? "currentColor" : "none"} />
+        </button>
+        <button className="ar-quick-add" type="button" onClick={() => onAdd(product)} disabled={product.stock <= 0} aria-label={`Add ${product.name} to bag`}>
+          {product.stock <= 0 ? "SOLD OUT" : added ? <><Check size={15} /> ADDED</> : <>ADD TO BAG <Plus size={15} /></>}
+        </button>
+      </div>
+      <div className="ar-product-copy">
+        <div className="ar-product-kicker"><span>{product.brand || "AL RAED"}</span>{product.rating > 0 && <span>★ {product.rating.toFixed(1)}</span>}</div>
+        <h3><button className="ar-product-title-button" type="button" onClick={() => onView(product)}>{product.name}</button></h3>
+        <button className="ar-product-details-link" type="button" onClick={() => onView(product)}>VIEW DETAILS <ArrowUpRight size={12} /></button>
+        <div className="ar-product-bottom"><strong>{money(product.price)}</strong>{product.stock > 0 && <small>{product.stock < 4 ? `Only ${product.stock} left` : "In stock"}</small>}</div>
+      </div>
+    </article>
+  );
+}
+
+function ScrollFilm() {
   const sectionRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const frameRef = useRef<number | null>(null);
@@ -51,1069 +134,394 @@ function ScrollVideo({ src, eyebrow, title, description, align = "left" }: { src
     const video = videoRef.current;
     if (!section || !video) return;
 
-    const isMobile = window.matchMedia("(max-width: 700px)").matches;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const mobile = window.matchMedia("(max-width: 700px)").matches;
 
-    if (isMobile) {
+    if (reduceMotion) {
+      video.pause();
+      return;
+    }
+
+    if (mobile) {
       video.loop = true;
-      video.autoplay = true;
-      video.muted = true;
-      video.playsInline = true;
       video.play().catch(() => undefined);
       return;
     }
 
-    const updateVideoFrame = () => {
+    const updateFrame = () => {
       frameRef.current = null;
       if (!video.duration || !Number.isFinite(video.duration)) return;
-      const range = Math.max(1, section.offsetHeight - window.innerHeight);
-      const rawProgress = Math.min(1, Math.max(0, -section.getBoundingClientRect().top / range));
-      const progress = 1 - Math.pow(1 - rawProgress, 3);
-      const nextTime = progress * video.duration;
-      if (Math.abs(video.currentTime - nextTime) > 0.01) video.currentTime = nextTime;
+      const scrollRange = Math.max(1, section.offsetHeight - window.innerHeight);
+      const scrollProgress = Math.min(1, Math.max(0, -section.getBoundingClientRect().top / scrollRange));
+      const easedProgress = 1 - Math.pow(1 - scrollProgress, 3);
+      const targetTime = easedProgress * video.duration;
+      if (Math.abs(video.currentTime - targetTime) > 0.02) video.currentTime = targetTime;
     };
-    const handleScroll = () => {
-      if (frameRef.current === null) frameRef.current = window.requestAnimationFrame(updateVideoFrame);
+    const scheduleFrame = () => {
+      if (frameRef.current === null) frameRef.current = window.requestAnimationFrame(updateFrame);
     };
+    const pausePlayback = () => video.pause();
 
-    const preventAutoplay = () => video.pause();
     video.pause();
-    video.addEventListener("play", preventAutoplay);
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    window.addEventListener("resize", handleScroll);
-    video.addEventListener("loadedmetadata", handleScroll);
-    if (video.readyState >= 1) updateVideoFrame();
+    video.addEventListener("play", pausePlayback);
+    video.addEventListener("loadedmetadata", scheduleFrame);
+    window.addEventListener("scroll", scheduleFrame, { passive: true });
+    window.addEventListener("resize", scheduleFrame);
+    if (video.readyState >= 1) updateFrame();
 
     return () => {
       if (frameRef.current !== null) window.cancelAnimationFrame(frameRef.current);
-      window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", handleScroll);
-      video.removeEventListener("loadedmetadata", handleScroll);
-      video.removeEventListener("play", preventAutoplay);
+      video.removeEventListener("play", pausePlayback);
+      video.removeEventListener("loadedmetadata", scheduleFrame);
+      window.removeEventListener("scroll", scheduleFrame);
+      window.removeEventListener("resize", scheduleFrame);
     };
   }, []);
 
   return (
-    <section ref={sectionRef} className={`scroll-video-section scroll-video-${align}`}>
-      <div className="scroll-video-stage">
-        <video ref={videoRef} className="scroll-video" src={src} muted playsInline preload="metadata" aria-label={title} />
-        <div className="scroll-video-shade" />
-        <div className="scroll-video-copy">
-          <p className="eyebrow">{eyebrow}</p>
-          <h2>{title}</h2>
-          <p>{description}</p>
-          <span className="scroll-video-hint">SCROLL TO EXPLORE <span aria-hidden="true">↓</span></span>
+    <section ref={sectionRef} className="ar-scroll-film" aria-label="Choose your equipment">
+      <div className="ar-scroll-film-stage">
+        <video ref={videoRef} className="ar-scroll-film-video" src="/animation3.mp4" muted playsInline preload="metadata" aria-label="Racquet sports equipment in motion" />
+        <div className="ar-scroll-film-shade" />
+        <div className="ar-scroll-film-copy">
+          <p className="ar-eyebrow"><span /> VICTOR · YONEX · MADE FOR YOUR GAME</p>
+          <h2>Choose your<br /><em>weapon.</em></h2>
+          <p>Every rally starts somewhere. Explore performance racquets and court shoes from the brands players trust.</p>
+          <Link className="ar-button ar-button-light" href="/shop?category=Badminton">FIND YOUR NEXT RACQUET <ArrowRight size={16} /></Link>
+          <span className="ar-scroll-film-hint"><span /> SCROLL TO FEEL THE DIFFERENCE</span>
         </div>
+        <div className="ar-scroll-film-index"><span>01</span><i /><span>03</span><small>BUILT FOR THE NEXT POINT</small></div>
       </div>
     </section>
   );
 }
 
-const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "";
-
-const normalizePhoneNumber = (value: string) => {
-  if (!value) return "";
-
-  const digitsOnly = value.replace(/\D/g, "");
-  if (!digitsOnly) return "";
-
-  if (digitsOnly.startsWith("971") && digitsOnly.length >= 11) {
-    return `+${digitsOnly}`;
-  }
-
-  if (digitsOnly.startsWith("0") && digitsOnly.length === 10) {
-    return `+971${digitsOnly.slice(1)}`;
-  }
-
-  if (digitsOnly.length >= 9) {
-    return `+${digitsOnly}`;
-  }
-
-  return "";
-};
-
-const createWhatsAppLink = (message: string, recipientNumber?: string) => {
-  const encoded = encodeURIComponent(message);
-  const normalizedRecipient = normalizePhoneNumber(recipientNumber || WHATSAPP_NUMBER || "");
-  const digitsOnly = normalizedRecipient.replace(/\D/g, "");
-
-  return digitsOnly
-    ? `https://wa.me/${digitsOnly}?text=${encoded}`
-    : `https://wa.me/?text=${encoded}`;
-};
-
-type Product = {
-  id: number;
-  name: string;
-  brand: string;
-  category: string;
-  price: number;
-  oldPrice?: number;
-  rating: number;
-  reviews: number;
-  image: string;
-  tone: string;
-  stock?: number;
-  badge?: string;
-};
-
-type CartItem = {
-  product: Product;
-  quantity: number;
-};
-
-export const legacySampleProducts: Product[] = [
-  {
-    id: 1,
-    name: "Astrox 100 Tour",
-    brand: "YONEX",
-    category: "Badminton",
-    price: 649,
-    oldPrice: 729,
-    rating: 4.9,
-    reviews: 28,
-    image: "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=900&q=85",
-    tone: "#e2e7ef",
-    badge: "BEST SELLER",
-  },
-  {
-    id: 2,
-    name: "Blade 98 v9",
-    brand: "WILSON",
-    category: "Tennis",
-    price: 799,
-    rating: 4.8,
-    reviews: 16,
-    image: "https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?auto=format&fit=crop&w=900&q=85",
-    tone: "#dce9df",
-    badge: "NEW ARRIVAL",
-  },
-  {
-    id: 3,
-    name: "Dunlop Sonic Core",
-    brand: "DUNLOP",
-    category: "Squash",
-    price: 1_099,
-    rating: 4.7,
-    reviews: 11,
-    image: "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=900&q=85",
-    tone: "#dfe8f4",
-  },
-  {
-    id: 4,
-    name: "Aerus Z2",
-    brand: "YONEX",
-    category: "Shoes",
-    price: 489,
-    oldPrice: 559,
-    rating: 4.9,
-    reviews: 34,
-    image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=85",
-    tone: "#f0e4dd",
-    badge: "-13%",
-  },
-  {
-    id: 5,
-    name: "Pro Staff 97 v14",
-    brand: "WILSON",
-    category: "Tennis",
-    price: 899,
-    rating: 4.8,
-    reviews: 9,
-    image: "https://images.unsplash.com/photo-1617083934555-5b4e2c9b4bb5?auto=format&fit=crop&w=900&q=85",
-    tone: "#dfe5e0",
-  },
-  {
-    id: 6,
-    name: "Tour Team Backpack",
-    brand: "HEAD",
-    category: "Accessories",
-    price: 279,
-    rating: 4.6,
-    reviews: 19,
-    image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=900&q=85",
-    tone: "#e8e5dc",
-  },
-  {
-    id: 7,
-    name: "Nanoflare 800 Pro",
-    brand: "YONEX",
-    category: "Badminton",
-    price: 899,
-    rating: 4.9,
-    reviews: 21,
-    image: "https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?auto=format&fit=crop&w=900&q=85",
-    tone: "#e0e9f5",
-    badge: "NEW ARRIVAL",
-  },
-  {
-    id: 8,
-    name: "Power Cushion 65 Z3",
-    brand: "YONEX",
-    category: "Shoes",
-    price: 529,
-    rating: 4.8,
-    reviews: 18,
-    image: "https://images.unsplash.com/photo-1552346154-21d32810aba3?auto=format&fit=crop&w=900&q=85",
-    tone: "#e5edf7",
-  },
-  {
-    id: 9,
-    name: "RPM Blast 1.30 String",
-    brand: "BABOLAT",
-    category: "Strings",
-    price: 89,
-    rating: 4.7,
-    reviews: 12,
-    image: "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=900&q=85",
-    tone: "#e8eef5",
-  },
-  {
-    id: 10,
-    name: "Pro Overgrip 3 Pack",
-    brand: "WILSON",
-    category: "Grips",
-    price: 39,
-    rating: 4.6,
-    reviews: 26,
-    image: "https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?auto=format&fit=crop&w=900&q=85",
-    tone: "#dce8f6",
-  },
-  {
-    id: 11,
-    name: "Performance Crew Socks",
-    brand: "ASICS",
-    category: "Socks",
-    price: 69,
-    rating: 4.8,
-    reviews: 17,
-    image: "https://images.unsplash.com/photo-1582966772680-860e372bb558?auto=format&fit=crop&w=900&q=85",
-    tone: "#e8edf4",
-  },
-  {
-    id: 12,
-    name: "Club Match Polo",
-    brand: "HEAD",
-    category: "Apparel",
-    price: 199,
-    oldPrice: 249,
-    rating: 4.7,
-    reviews: 8,
-    image: "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=900&q=85",
-    tone: "#dce7f3",
-    badge: "-20%",
-  },
-  {
-    id: 13,
-    name: "Team Indoor Court Shoe",
-    brand: "ASICS",
-    category: "Shoes",
-    price: 379,
-    rating: 4.8,
-    reviews: 15,
-    image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=85",
-    tone: "#e4ebf5",
-  },
-  {
-    id: 14,
-    name: "Championship Squash Ball",
-    brand: "DUNLOP",
-    category: "Squash",
-    price: 45,
-    rating: 4.9,
-    reviews: 31,
-    image: "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=900&q=85",
-    tone: "#e7edf4",
-  },
-  {
-    id: 15,
-    name: "Astrox 99 Pro",
-    brand: "YONEX",
-    category: "Badminton",
-    price: 1_049,
-    rating: 4.9,
-    reviews: 42,
-    image: "https://www.yonex.com/media/catalog/product/a/l/all_3ax99-p_530-1.png?quality=90&fit=bounds&width=900",
-    tone: "#e7edf5",
-    badge: "PRO SERIES",
-  },
-  {
-    id: 16,
-    name: "Astrox 88S Pro",
-    brand: "YONEX",
-    category: "Badminton",
-    price: 999,
-    rating: 4.9,
-    reviews: 36,
-    image: "https://www.yonex.com/media/catalog/product/3/a/3ax88s-p_417-1_02.png?quality=90&fit=bounds&width=900",
-    tone: "#e2eaf5",
-  },
-  {
-    id: 17,
-    name: "Astrox 100 ZZ",
-    brand: "YONEX",
-    category: "Badminton",
-    price: 1_149,
-    rating: 4.9,
-    reviews: 53,
-    image: "https://www.yonex.com/media/catalog/product/a/s/astrox100zz_kurenai.png?quality=90&fit=bounds&width=900",
-    tone: "#dce7f6",
-    badge: "PLAYER FAVOURITE",
-  },
-  {
-    id: 18,
-    name: "Astrox DG",
-    brand: "YONEX",
-    category: "Badminton",
-    price: 349,
-    rating: 4.6,
-    reviews: 18,
-    image: "https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?auto=format&fit=crop&w=900&q=90",
-    tone: "#e8eef7",
-  },
-  {
-    id: 19,
-    name: "Astrox Nextage",
-    brand: "YONEX",
-    category: "Badminton",
-    price: 749,
-    rating: 4.8,
-    reviews: 24,
-    image: "https://www.yonex.com/media/catalog/product/a/x/ax-nx__2223_2.png?quality=90&fit=bounds&width=900",
-    tone: "#e4edf8",
-  },
-  {
-    id: 20,
-    name: "Astrox 99 Game",
-    brand: "YONEX",
-    category: "Badminton",
-    price: 599,
-    rating: 4.8,
-    reviews: 29,
-    image: "https://www.yonex.com/media/catalog/product/a/l/all_3ax99-g_530-1.png?quality=90&fit=bounds&width=900",
-    tone: "#e1eaf6",
-  },
-  {
-    id: 21,
-    name: "Nanoflare 1000 Tour",
-    brand: "YONEX",
-    category: "Badminton",
-    price: 849,
-    rating: 4.9,
-    reviews: 31,
-    image: "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=900&q=90",
-    tone: "#e3edf9",
-    badge: "NEW ARRIVAL",
-  },
-  {
-    id: 32,
-    name: "Nanoflare 1000Z",
-    brand: "YONEX",
-    category: "Badminton",
-    price: 1_199,
-    rating: 4.9,
-    reviews: 47,
-    image: "/astroximg.JPG",
-    tone: "#dfeafa",
-    badge: "SPEED SERIES",
-  },
-  {
-    id: 22,
-    name: "Power Cushion Cascade Accel",
-    brand: "YONEX",
-    category: "Shoes",
-    price: 479,
-    rating: 4.8,
-    reviews: 20,
-    image: "https://www.yonex.com/media/catalog/product/a/l/all_shbca2_002-1.jpg?quality=90&fit=bounds&width=900",
-    tone: "#e4edf8",
-  },
-  {
-    id: 23,
-    name: "Power Cushion Aerus Z",
-    brand: "YONEX",
-    category: "Shoes",
-    price: 529,
-    rating: 4.9,
-    reviews: 38,
-    image: "https://www.yonex.com/media/catalog/product/a/l/all_shbaz2m_207-1.jpg?quality=90&fit=bounds&width=900",
-    tone: "#e8eef7",
-    badge: "LIGHTWEIGHT",
-  },
-  {
-    id: 24,
-    name: "Power Cushion Eclipsion Z",
-    brand: "YONEX",
-    category: "Shoes",
-    price: 579,
-    rating: 4.8,
-    reviews: 22,
-    image: "https://www.yonex.com/media/catalog/product/a/l/all_shbelz3m_532-1.png?quality=90&fit=bounds&width=900",
-    tone: "#e0e8f2",
-  },
-  {
-    id: 25,
-    name: "Viktor Axelsen Unisex T-Shirt",
-    brand: "YONEX",
-    category: "Apparel",
-    price: 189,
-    rating: 4.7,
-    reviews: 14,
-    image: "https://www.yonex.com/media/catalog/product/a/l/all_16935_011-1.jpg?quality=90&fit=bounds&width=900",
-    tone: "#e6edf7",
-  },
-  {
-    id: 26,
-    name: "Viktor Axelsen Unisex Polo Shirt",
-    brand: "YONEX",
-    category: "Apparel",
-    price: 229,
-    rating: 4.7,
-    reviews: 11,
-    image: "https://www.yonex.com/media/catalog/product/a/l/all_10819_011-1.jpg?quality=90&fit=bounds&width=900",
-    tone: "#e3ebf6",
-  },
-  {
-    id: 27,
-    name: "Auraspeed 100X",
-    brand: "VICTOR",
-    category: "Badminton",
-    price: 899,
-    rating: 4.8,
-    reviews: 17,
-    image: "https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?auto=format&fit=crop&w=900&q=90",
-    tone: "#e2eaf5",
-    badge: "VICTOR SERIES",
-  },
-  {
-    id: 28,
-    name: "Thruster Ryuga II Pro",
-    brand: "VICTOR",
-    category: "Badminton",
-    price: 949,
-    rating: 4.8,
-    reviews: 19,
-    image: "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=900&q=90",
-    tone: "#e7edf5",
-  },
-  {
-    id: 29,
-    name: "P9200TD Court Shoe",
-    brand: "VICTOR",
-    category: "Shoes",
-    price: 449,
-    rating: 4.7,
-    reviews: 13,
-    image: "https://images.unsplash.com/photo-1552346154-21d32810aba3?auto=format&fit=crop&w=900&q=90",
-    tone: "#e3eaf3",
-  },
-  {
-    id: 30,
-    name: "A970 NitroLite Court Shoe",
-    brand: "VICTOR",
-    category: "Shoes",
-    price: 399,
-    rating: 4.7,
-    reviews: 10,
-    image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=90",
-    tone: "#e6edf7",
-  },
-  {
-    id: 31,
-    name: "Victor Team Performance T-Shirt",
-    brand: "VICTOR",
-    category: "Apparel",
-    price: 159,
-    rating: 4.6,
-    reviews: 9,
-    image: "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=900&q=90",
-    tone: "#e1eaf5",
-  },
-];
-
-const sports = [
-  { name: "Badminton", image: "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=1400&q=92" },
-  { name: "Tennis", image: "https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?auto=format&fit=crop&w=1400&q=92" },
-  { name: "Squash", image: "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=1400&q=92" },
-  { name: "Accessories", image: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1400&q=92" },
-];
-
-function ProductCard({ product, onAdd }: { product: Product; onAdd: (product: Product) => void }) {
-  const [liked, setLiked] = useState(false);
-
-  return (
-    <article className="product-card">
-      <div className="product-image" style={{ backgroundColor: product.tone }}>
-        <img src={product.image} alt={product.name} />
-        {product.badge && <span className="product-badge">{product.badge}</span>}
-        <button className={`heart-button ${liked ? "liked" : ""}`} aria-label={`Add ${product.name} to wishlist`} onClick={() => setLiked(!liked)}>
-          <Heart size={17} fill={liked ? "currentColor" : "none"} />
-        </button>
-        <button className="quick-add" onClick={() => onAdd(product)} disabled={product.stock === 0}>{product.stock === 0 ? "SOLD OUT" : <>ADD TO BAG <Plus size={15} /></>}</button>
-      </div>
-      <div className="product-meta">
-        <div className="product-brand">{product.brand}</div>
-        <h3>{product.name}</h3>
-        {product.rating > 0 && <div className="rating"><Star size={13} fill="currentColor" /><span>{product.rating}</span><span className="review-count">({product.reviews})</span></div>}
-        <div className="price-line"><strong>AED {product.price.toLocaleString()}</strong></div>
-        <div className="product-stock">{product.stock === 0 ? "Out of stock" : `${product.stock} in stock`}</div>
-      </div>
-    </article>
-  );
-}
-
 export default function Home() {
   const router = useRouter();
-  const pathname = usePathname();
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [catalogLoaded, setCatalogLoaded] = useState(false);
-  const [cartRestored, setCartRestored] = useState(false);
-  const [catalogError, setCatalogError] = useState<string | null>(null);
-  const [cartOpen, setCartOpen] = useState(false);
-  const [checkoutOpen, setCheckoutOpen] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [query, setQuery] = useState("");
+  const [products, setProducts] = useState<StoreProduct[]>([]);
+  const [catalogState, setCatalogState] = useState<"loading" | "ready" | "error">("loading");
+  const [catalogError, setCatalogError] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
-  const [featuredIndex, setFeaturedIndex] = useState(0);
-  const [searchFocused, setSearchFocused] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [pendingProduct, setPendingProduct] = useState<Product | null>(null);
-  const [userName, setUserName] = useState<string | null>(null);
-  const [authError, setAuthError] = useState<string | null>(null);
-  const [customerProfile, setCustomerProfile] = useState<CustomerProfile | null>(null);
-  const [selectedAddressId, setSelectedAddressId] = useState("");
-  const [checkoutNotes, setCheckoutNotes] = useState("");
-  const [checkoutBusy, setCheckoutBusy] = useState(false);
-  const [checkoutSuccess, setCheckoutSuccess] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [cart, setCart] = useState<CartLine[]>([]);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [cartReady, setCartReady] = useState(false);
+  const [wishlist, setWishlist] = useState<number[]>([]);
+  const [wishlistReady, setWishlistReady] = useState(false);
+  const [campaignIndex, setCampaignIndex] = useState(0);
+  const [justAdded, setJustAdded] = useState<number[]>([]);
+  const [selectedProduct, setSelectedProduct] = useState<StoreProduct | null>(null);
+  const [announcementIndex, setAnnouncementIndex] = useState(0);
+  const railRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+  const navRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     let active = true;
-    const loadStore = async (restoreCart = false) => {
-      try {
-        const response = await fetch("/api/products", { cache: "no-store" });
-        const result = await response.json();
-        if (!response.ok) throw new Error(result.error || "Unable to load products.");
-        const rows = result.products as Array<Record<string, unknown>>;
+    fetch("/api/products", { cache: "no-store" })
+      .then(async (response) => {
+        const result: { products?: Array<Record<string, unknown>>; error?: string } = await response.json();
+        if (!response.ok) throw new Error(result.error || "The product catalog could not be loaded.");
+        return result.products ?? [];
+      })
+      .then((rows) => {
         if (!active) return;
-        const currentProducts = rows.map((row) => ({
-          id: Number(row.id),
-          name: String(row.name ?? ""),
-          brand: String(row.brand ?? ""),
-          category: String(row.category ?? ""),
-          price: Number(row.price ?? 0),
-          rating: Number(row.rating ?? 0),
-          reviews: Number(row.reviews ?? 0),
-          image: String(row.image_url ?? ""),
-          tone: "#e8edf4",
-          stock: Number(row.stock ?? 0),
-        }));
-        setProducts(currentProducts);
-        if (restoreCart) {
-          let savedItems: CartItem[] = [];
-          try {
-            const savedCart = localStorage.getItem("alraed-cart");
-            savedItems = savedCart ? JSON.parse(savedCart) as CartItem[] : [];
-          } catch {
-            localStorage.removeItem("alraed-cart");
-          }
-          setCart(Array.isArray(savedItems) ? savedItems.flatMap((item) => {
-            const product = currentProducts.find((currentProduct) => currentProduct.id === Number(item?.product?.id));
-            const quantity = Number(item?.quantity);
-            return product && Number.isInteger(quantity) && quantity > 0 ? [{ product, quantity }] : [];
-          }) : []);
-        } else {
-          setCart((current) => current.flatMap((item) => {
-            const product = currentProducts.find((currentProduct) => currentProduct.id === item.product.id);
-            return product ? [{ ...item, product }] : [];
-          }));
-        }
-        setCatalogError(null);
-      } catch (error) {
-        if (active && restoreCart) setCatalogError(error instanceof Error ? error.message : "Unable to load products.");
-      } finally {
-        if (active && restoreCart) {
-          setCatalogLoaded(true);
-          setCartRestored(true);
-        }
-      }
-    };
-    void loadStore(true);
-    const refreshCatalog = () => {
-      if (document.visibilityState === "visible") void loadStore();
-    };
-    const refreshTimer = window.setInterval(refreshCatalog, 30_000);
-    window.addEventListener("focus", refreshCatalog);
-    document.addEventListener("visibilitychange", refreshCatalog);
-    return () => {
-      active = false;
-      window.clearInterval(refreshTimer);
-      window.removeEventListener("focus", refreshCatalog);
-      document.removeEventListener("visibilitychange", refreshCatalog);
-    };
-  }, []);
-
-  useEffect(() => {
-    let active = true;
-    const unsubscribe = subscribeToAuth((user) => {
-      const loggedIn = Boolean(user);
-      setIsLoggedIn(loggedIn);
-      setUserName(user?.displayName ?? user?.email ?? null);
-      if (!user) {
-        setCustomerProfile(null);
-        localStorage.setItem("alraed-login", "false");
-        return;
-      }
-
-      localStorage.setItem("alraed-login", "true");
-      void (async () => {
-        try {
-          const token = await user.getIdToken();
-          const response = await fetch("/api/profile", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
-          const result = await response.json();
-          if (!response.ok) throw new Error(result.error || "Unable to load your account.");
-          if (!active) return;
-          const profile = result.profile as CustomerProfile;
-          setCustomerProfile(profile);
-          const complete = Boolean(profile.phone && profile.addresses?.length);
-          if (!complete && pathname !== "/account") router.replace("/account?setup=1");
-        } catch {
-          if (active && pathname !== "/account") router.replace("/account?setup=1");
-        }
-      })();
-    });
-
-    return () => {
-      active = false;
-      unsubscribe();
-    };
-  }, [pathname, router]);
-
-  useEffect(() => {
-    if (!catalogLoaded || !cartRestored) return;
-    localStorage.setItem("alraed-cart", JSON.stringify(cart));
-  }, [cart, catalogLoaded, cartRestored]);
-
-  useEffect(() => {
-    const handleCategoryShortcut = (event: Event) => {
-      const category = (event as CustomEvent<string>).detail;
-      setActiveCategory(["Badminton", "Tennis", "Squash", "Accessories"].includes(category) ? category : "Accessories");
-      document.getElementById("shop")?.scrollIntoView({ behavior: "smooth" });
-    };
-    window.addEventListener("alraed-category", handleCategoryShortcut);
-    return () => window.removeEventListener("alraed-category", handleCategoryShortcut);
-  }, []);
-
-  const searchCatalog = useMemo(() => {
-    const categorySuggestions = [
-      { label: "Badminton", type: "Category", value: "badminton" },
-      { label: "Tennis", type: "Category", value: "tennis" },
-      { label: "Squash", type: "Category", value: "squash" },
-      { label: "Accessories", type: "Category", value: "accessories" },
-    ];
-
-    const brandSuggestions = Array.from(new Set(products.map((product) => product.brand))).map((brand) => ({
-      label: brand,
-      type: "Brand",
-      value: brand.toLowerCase(),
-    }));
-
-    const productSuggestions = products.map((product) => ({
-      label: `${product.brand} ${product.name} ${product.category}`,
-      type: "Product",
-      value: `${product.brand} ${product.name} ${product.category} ${product.name.replace(/\s+/g, "").toLowerCase()}`,
-    }));
-
-    return [...categorySuggestions, ...brandSuggestions, ...productSuggestions];
-  }, [products]);
-
-  const searchSuggestions = useMemo(() => {
-    const trimmedQuery = query.trim();
-    if (!trimmedQuery) {
-      return [];
-    }
-
-    const tokens = trimmedQuery.toLowerCase().split(/\s+/).filter(Boolean);
-
-    return searchCatalog.filter(({ label, value }) => {
-      const searchable = `${label} ${value}`.toLowerCase();
-      return tokens.every((token) => searchable.includes(token));
-    }).slice(0, 8);
-  }, [query, searchCatalog]);
-
-  const filteredProducts = useMemo(() => products.filter((product) => {
-    const matchesCategory = activeCategory === "All" || product.category === activeCategory;
-    const matchesQuery = `${product.name} ${product.brand} ${product.category}`.toLowerCase().includes(query.toLowerCase());
-    return matchesCategory && matchesQuery;
-  }), [activeCategory, products, query]);
-
-  const applySearch = (nextValue: string) => {
-    const value = nextValue.trim();
-    if (!value) {
-      setQuery("");
-      setSearchFocused(false);
-      return;
-    }
-
-    setQuery(value);
-    setSearchFocused(false);
-    const matchedCategory = ["Badminton", "Tennis", "Squash", "Accessories"].find(
-      (category) => category.toLowerCase() === value.toLowerCase() || value.toLowerCase().includes(category.toLowerCase())
-    );
-
-    if (matchedCategory) {
-      setActiveCategory(matchedCategory);
-    }
-
-    document.getElementById("shop")?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  const addToCart = (product: Product) => {
-    if (!isLoggedIn) {
-      setPendingProduct(product);
-      setAuthModalOpen(true);
-      return;
-    }
-
-    setCart((current) => {
-      const existingIndex = current.findIndex((item) => item.product.id === product.id);
-      if (existingIndex >= 0) {
-        return current.map((item, index) =>
-          index === existingIndex ? { ...item, quantity: item.quantity + 1 } : item
-        );
-      }
-
-      return [...current, { product, quantity: 1 }];
-    });
-    setCartOpen(true);
-  };
-
-  const handleGoogleLogin = async () => {
-    setAuthError(null);
-
-    if (!firebaseEnabled) {
-      setAuthError("Firebase is not configured yet. Add your Firebase values in the environment to enable Google login.");
-      return;
-    }
-
-    try {
-      const result = await signInWithGoogle();
-      const signedInUser = result.user;
-      setUserName(signedInUser.displayName ?? signedInUser.email ?? "Google customer");
-      setIsLoggedIn(true);
-      setAuthModalOpen(false);
-
-      if (pendingProduct) {
-        setCart((current) => {
-          const existingIndex = current.findIndex((item) => item.product.id === pendingProduct.id);
-          if (existingIndex >= 0) {
-            return current.map((item, index) =>
-              index === existingIndex ? { ...item, quantity: item.quantity + 1 } : item
-            );
-          }
-
-          return [...current, { product: pendingProduct, quantity: 1 }];
-        });
-        setCartOpen(true);
-        setPendingProduct(null);
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to sign in with Google right now.";
-      setAuthError(message);
-    }
-  };
-
-  const handleLogout = async () => {
-    router.push("/account");
-  };
-
-  const updateQuantity = (productId: number, change: number) => {
-    setCart((current) =>
-      current
-        .map((item) =>
-          item.product.id === productId ? { ...item, quantity: item.quantity + change } : item
-        )
-        .filter((item) => item.quantity > 0)
-    );
-  };
-
-  const cartCount = cart.reduce((count, item) => count + item.quantity, 0);
-  const cartTotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
-
-  const openCheckout = () => {
-    if (!isLoggedIn) {
-      setAuthModalOpen(true);
-      return;
-    }
-
-    const savedAddresses = customerProfile?.addresses ?? [];
-    if (!customerProfile?.phone || savedAddresses.length === 0) {
-      router.push("/account?setup=1");
-      return;
-    }
-
-    setCartOpen(false);
-    setSelectedAddressId(savedAddresses.find((address) => address.is_default)?.id ?? savedAddresses[0].id);
-    setCheckoutNotes("");
-    setAuthError(null);
-    setCheckoutOpen(true);
-  };
-
-  const handleCheckoutSubmit = async () => {
-    const savedAddresses = customerProfile?.addresses ?? [];
-    const shippingAddress = savedAddresses.find((address) => address.id === selectedAddressId) ?? savedAddresses.find((address) => address.is_default);
-    const customerPhone = normalizePhoneNumber(customerProfile?.phone || "");
-    const businessPhone = normalizePhoneNumber(WHATSAPP_NUMBER || "");
-
-    if (!customerProfile || !shippingAddress || !customerPhone) {
-      setCheckoutOpen(false);
-      router.push("/account?setup=1");
-      return;
-    }
-
-    if (!businessPhone) {
-      setAuthError("Set NEXT_PUBLIC_WHATSAPP_NUMBER in the environment to enable WhatsApp checkout.");
-      return;
-    }
-
-    const whatsappWindow = window.open("about:blank", "_blank");
-
-    if (!whatsappWindow) {
-      setAuthError("Your browser blocked the WhatsApp popup. Please allow popups and try again.");
-      return;
-    }
-    setCheckoutBusy(true);
-    setAuthError(null);
-
-    try {
-      const currentUser = auth?.currentUser;
-      if (!currentUser) throw new Error("Your sign-in session expired. Please sign in again.");
-      const token = await currentUser.getIdToken();
-      const response = await fetch("/api/orders", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          products: cart,
-          addressId: shippingAddress.id,
-          notes: checkoutNotes,
-        }),
+        setProducts(rows.map(mapStoreProduct));
+        setCatalogState("ready");
+      })
+      .catch((error: unknown) => {
+        if (!active) return;
+        setCatalogError(error instanceof Error ? error.message : "The product catalog could not be loaded.");
+        setCatalogState("error");
       });
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        whatsappWindow.close();
-        setAuthError(result?.error || "Unable to save the order right now.");
-        return;
+    const restoreTimer = window.setTimeout(() => {
+      try {
+        const saved = localStorage.getItem("alraed-storefront-cart");
+        if (saved) {
+          const parsedCart: unknown = JSON.parse(saved);
+          if (Array.isArray(parsedCart)) setCart(parsedCart.filter(isCartLine));
+        }
+        const savedWishlist = localStorage.getItem("alraed-storefront-wishlist");
+        if (savedWishlist) {
+          const parsedWishlist: unknown = JSON.parse(savedWishlist);
+          if (Array.isArray(parsedWishlist)) setWishlist(parsedWishlist.filter((id): id is number => typeof id === "number" && Number.isSafeInteger(id) && id > 0));
+        }
+      } catch {
+        localStorage.removeItem("alraed-storefront-cart");
+        localStorage.removeItem("alraed-storefront-wishlist");
       }
+      setCartReady(true);
+      setWishlistReady(true);
+    });
 
-      const confirmedItems = Array.isArray(result.items) ? result.items as Array<{ product_name: string; quantity: number; unit_price: number }> : [];
-      const confirmedTotal = Number(result.total);
-      if (confirmedItems.length === 0 || !Number.isFinite(confirmedTotal)) {
-        throw new Error("The order was saved, but its confirmed price summary could not be prepared. Contact the store with your order reference.");
+    return () => {
+      active = false;
+      window.clearTimeout(restoreTimer);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (catalogState !== "ready") return;
+    const match = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (match.matches) return;
+    const timer = window.setInterval(() => setCampaignIndex((index) => (index + 1) % campaigns.length), 6500);
+    return () => window.clearInterval(timer);
+  }, [catalogState]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setAnnouncementIndex((index) => (index + 1) % 3), 4500);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (cartReady) localStorage.setItem("alraed-storefront-cart", JSON.stringify(cart));
+  }, [cart, cartReady]);
+
+  useEffect(() => {
+    if (wishlistReady) localStorage.setItem("alraed-storefront-wishlist", JSON.stringify(wishlist));
+  }, [wishlist, wishlistReady]);
+
+  useEffect(() => {
+    if (searchOpen) searchRef.current?.focus();
+  }, [searchOpen]);
+
+  useEffect(() => {
+    if (!cartOpen && !menuOpen && !selectedProduct) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setCartOpen(false);
+        setMenuOpen(false);
+        setSelectedProduct(null);
       }
-      const orderLines = confirmedItems
-        .map((item, index) => `${index + 1}. ${item.product_name} x ${item.quantity} - AED ${(Number(item.unit_price) * item.quantity).toLocaleString()}`)
-        .join("\n");
-      const summary = `Hello Al Raed Sports,\n\nI would like to confirm this order. Please let me know the available payment options and next steps.\n\nCustomer details:\nName: ${customerProfile.full_name || userName || "Customer"}\nEmail: ${customerProfile.email || "Not provided"}\nPhone: ${customerPhone}\nCity: ${shippingAddress.city}\nAddress: ${shippingAddress.address}\nNotes: ${checkoutNotes.trim() || "None"}\n\nOrder details:\n${orderLines}\n\nTotal: AED ${confirmedTotal.toLocaleString()}\n\nPayment: To be arranged manually via WhatsApp.\n\nPlease confirm this order and advise how to complete payment. Thank you.`;
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [cartOpen, menuOpen, selectedProduct]);
 
-      const orderId = result?.orderId ? String(result.orderId).slice(0, 8).toUpperCase() : "NEW";
-      const orderNumberMessage = `Order reference: #${orderId}\n`;
-      whatsappWindow.location.href = createWhatsAppLink(
-        `${summary}\n${orderNumberMessage}`,
-        businessPhone
+  const filteredProducts = useMemo(() => products.filter((product) => {
+    const matchesCategory = activeCategory === "All" || product.category.toLowerCase() === activeCategory.toLowerCase();
+    const matchesSearch = !query || `${product.name} ${product.brand} ${product.category}`.toLowerCase().includes(query.toLowerCase());
+    return matchesCategory && matchesSearch;
+  }), [products, activeCategory, query]);
+
+  const newArrivals = products.slice(0, 10);
+  const bestSellers = [...products].sort((a, b) => b.rating - a.rating || b.reviews - a.reviews).slice(0, 10);
+  const cartCount = cart.reduce((count, line) => count + line.quantity, 0);
+  const cartTotal = cart.reduce((sum, line) => sum + line.product.price * line.quantity, 0);
+  const suggestions = query ? products.filter((product) => `${product.name} ${product.brand} ${product.category}`.toLowerCase().includes(query.toLowerCase())).slice(0, 5) : [];
+
+  const addToCart = useCallback((product: StoreProduct, requestedQuantity = 1) => {
+    if (product.stock < 1) return;
+    setCart((items) => {
+      const existing = items.find((line) => line.product.id === product.id);
+      if (existing) {
+        if (existing.quantity >= Math.min(product.stock, 50)) return items;
+        return items.map((line) => line.product.id === product.id ? { ...line, product, quantity: Math.min(line.quantity + requestedQuantity, product.stock, 50) } : line);
+      }
+      return [...items, { product, quantity: Math.min(requestedQuantity, product.stock, 50) }];
+    });
+    setJustAdded((items) => [...items.filter((id) => id !== product.id), product.id]);
+    window.setTimeout(() => setJustAdded((items) => items.filter((id) => id !== product.id)), 1500);
+  }, []);
+
+  const changeQuantity = (id: number, delta: number) => setCart((items) => items.flatMap((line) => {
+    if (line.product.id !== id) return [line];
+    const next = line.quantity + delta;
+    return next > 0 ? [{ ...line, quantity: Math.min(next, Math.min(line.product.stock, 50)) }] : [];
+  }));
+
+  const toggleWishlist = (id: number) => setWishlist((items) => {
+    const next = items.includes(id) ? items.filter((item) => item !== id) : [...items, id];
+    return next;
+  });
+
+  const scrollRail = (direction: "left" | "right") => railRef.current?.scrollBy({ left: direction === "right" ? 520 : -520, behavior: "smooth" });
+  const selectCategory = (name: string) => {
+    setMenuOpen(false);
+    navRef.current?.querySelectorAll("details").forEach((details) => { details.open = false; });
+    router.push(name === "All" ? "/shop" : `/shop?category=${encodeURIComponent(name)}`);
+  };
+  const closeNavDropdowns = () => navRef.current?.querySelectorAll("details").forEach((details) => { details.open = false; });
+  const viewProduct = (product: StoreProduct) => {
+    closeNavDropdowns();
+    setMenuOpen(false);
+    setSearchOpen(false);
+    setSelectedProduct(product);
+  };
+  const addProductDetailsToCart = (product: StoreProduct, quantity: number) => {
+    addToCart(product, quantity);
+    setSelectedProduct(null);
+    setCartOpen(true);
+  };
+  const openFavourites = () => {
+    closeNavDropdowns();
+    setMenuOpen(false);
+    document.getElementById("player-favourites")?.scrollIntoView({ behavior: "smooth" });
+  };
+  const menuProducts = (categoryName?: string) => {
+    const matchingProducts = categoryName
+      ? products.filter((product) => product.category.toLowerCase() === categoryName.toLowerCase())
+      : products;
+    return matchingProducts.slice(0, 3);
+  };
+  const renderMenuProducts = (categoryName?: string) => {
+    const picks = menuProducts(categoryName);
+    if (picks.length === 0) {
+      const category = categories.find((item) => item.name === categoryName);
+      return (
+        <div className="ar-mega-empty-card">
+          <img src={category?.image ?? categories[0].image} alt="" />
+          <span>{categoryName ? `MADE FOR ${categoryName.toUpperCase()}` : "MADE FOR YOUR GAME"}</span>
+          <strong>Find your next favourite.</strong>
+          <button type="button" onClick={() => { closeNavDropdowns(); setMenuOpen(false); document.querySelector(".ar-categories")?.scrollIntoView({ behavior: "smooth" }); }}>EXPLORE THE SPORTS <ArrowRight size={13} /></button>
+        </div>
       );
-      setCheckoutOpen(false);
-      setCart([]);
-      localStorage.setItem("alraed-cart", JSON.stringify([]));
-      setCheckoutSuccess("Your order is saved and your payment request has been sent via WhatsApp.");
-      window.setTimeout(() => setCheckoutSuccess(null), 8000);
-    } catch (error) {
-      whatsappWindow.close();
-      const message = error instanceof Error ? error.message : "Unable to save the order right now.";
-      setAuthError(message);
-    } finally {
-      setCheckoutBusy(false);
     }
+
+    return (
+      <div className="ar-mega-product-grid">
+        {picks.map((product) => (
+          <article className="ar-mega-product" key={product.id}>
+            <button className="ar-mega-product-image" type="button" onClick={() => viewProduct(product)} aria-label={`View details for ${product.name}`}>
+              {product.image ? <img src={product.image} alt={product.name} /> : <span>AL RAED</span>}
+              <span className={`ar-mega-stock ${product.stock > 0 ? "is-available" : ""}`}>{product.stock > 0 ? (product.stock < 4 ? `ONLY ${product.stock} LEFT` : "IN STOCK") : "SOLD OUT"}</span>
+            </button>
+            <small>{product.brand || "AL RAED SPORTS"}</small>
+            <strong>{product.name}</strong>
+            <div><span>{money(product.price)}</span><button type="button" onClick={() => addToCart(product)} disabled={product.stock < 1} aria-label={`Add ${product.name} to bag`}><Plus size={14} /></button></div>
+          </article>
+        ))}
+      </div>
+    );
   };
 
-  const browseCategory = (category: string) => setActiveCategory(category);
-  const featuredProducts = products.slice(0, 6);
+  const handleWhatsAppCheckout = () => {
+    const lines = cart.map(({ product, quantity }) => `• ${product.name} × ${quantity} — ${money(product.price * quantity)}`).join("\n");
+    const message = encodeURIComponent(`Hello Al Raed Sports, I'd like to place an order:\n\n${lines}\n\nTotal: ${money(cartTotal)}`);
+    const configuredNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.replace(/\D/g, "");
+    window.open(configuredNumber ? `https://wa.me/${configuredNumber}?text=${message}` : `https://wa.me/?text=${message}`, "_blank", "noopener,noreferrer");
+  };
+
+  const campaign = campaigns[campaignIndex];
+  const productList = query || activeCategory !== "All" ? filteredProducts : newArrivals;
+  const productHeading = query ? "Search results" : activeCategory === "All" ? "Just landed" : `${activeCategory} essentials`;
 
   return (
-    <main>
-      <header className="site-header">
-        <div className="header-group header-group-logo">
-          <button className="mobile-menu" onClick={() => setMenuOpen(!menuOpen)} aria-label="Open menu"><Menu size={21} /></button>
-          <img className="brand-mark" src="/IMG_8477.jpg%2010-33-16-710.jpg" alt="Al Raed Sports logo" />
-        </div>
+    <main className="ar-store">
+      <div className="ar-announcement" aria-live="polite">
+        <button type="button" aria-label="Previous announcement" onClick={() => setAnnouncementIndex((index) => (index + 2) % 3)}><ArrowLeft size={14} /></button>
+        <p>{[
+          <>MADE FOR THE UAE <span>·</span> FREE DELIVERY ON ORDERS OVER AED 200</>,
+          <>YOUR GAME, DELIVERED <span>·</span> QUICK UAE-WIDE SHIPPING</>,
+          <>NEED A HAND? <span>·</span> OUR TEAM KNOWS THEIR RACQUETS</>,
+        ][announcementIndex]}</p>
+        <button type="button" aria-label="Next announcement" onClick={() => setAnnouncementIndex((index) => (index + 1) % 3)}><ArrowRight size={14} /></button>
+      </div>
 
-        <div className="header-group header-group-brand">
-          <a className="logo" href="#top" aria-label="Al Raed Sports home"><span>AL RAED SPORTS</span></a>
-        </div>
-
-        <div className="header-group header-group-nav">
-          <nav className={menuOpen ? "nav open" : "nav"}>
-            {['Shop', 'Badminton', 'Tennis', 'Squash', 'Apparel', 'Brands'].map((item) => <a href={item === 'Shop' ? '#shop' : '#categories'} key={item}>{item}</a>)}
-          </nav>
-        </div>
-
-        <div className="header-group header-group-search">
-          <div className="header-actions">
-            <div className="search-wrap">
-              <label className="search-box" aria-label="Search products">
-                <Search size={18} />
-                <input
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  onFocus={() => setSearchFocused(true)}
-                  onBlur={() => window.setTimeout(() => setSearchFocused(false), 150)}
-                  placeholder="Search products"
-                  aria-label="Search products"
-                />
-              </label>
-              {searchFocused && query.trim() && searchSuggestions.length > 0 && (
-                <div className="search-suggestions" role="listbox" aria-label="Search suggestions">
-                  {searchSuggestions.map((suggestion) => (
-                    <button
-                      key={`${suggestion.type}-${suggestion.label}`}
-                      type="button"
-                      className="search-suggestion"
-                      onMouseDown={(event) => event.preventDefault()}
-                      onClick={() => applySearch(suggestion.value)}
-                    >
-                      <span className="search-suggestion-label">{suggestion.label}</span>
-                      <small>{suggestion.type}</small>
-                    </button>
-                  ))}
-                </div>
-              )}
+      <header className="ar-header">
+        <button className="ar-mobile-menu" type="button" aria-label="Open menu" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <X /> : <Menu />}</button>
+        <Link className="ar-wordmark" href="/" aria-label="Al Raed Sports home"><span className="ar-mark">AR</span><span>AL RAED<small>SPORTS</small></span></Link>
+        <nav className={`ar-nav ${menuOpen ? "is-open" : ""}`} aria-label="Main navigation" ref={navRef}>
+          <details className="ar-nav-dropdown ar-shop-dropdown">
+            <summary>SHOP <ChevronDown size={13} /></summary>
+            <div className="ar-mega-menu ar-shop-mega">
+              <div className="ar-mega-links"><small>FIND YOUR GAME</small><button type="button" onClick={() => selectCategory("All")}>Shop everything <ArrowRight size={14} /></button>{categories.map((category) => <button type="button" key={category.name} onClick={() => selectCategory(category.name)}>{category.name}<ArrowRight size={14} /></button>)}<span>PLAYER-APPROVED PICKS, RIGHT HERE IN THE UAE.</span></div>
+              <div className="ar-mega-showcase"><div className="ar-mega-showcase-heading"><Sparkles size={15} /><span>{products.length ? "IN THE SHOP RIGHT NOW" : "CURATED FOR THE COURT"}</span></div>{renderMenuProducts()}</div>
             </div>
-            <button className="search-submit" type="button" aria-label="Search" onClick={() => applySearch(query)}>
-              <Search size={16} />
-            </button>
-          </div>
-        </div>
-
-        <div className="header-group header-group-profile">
-          <button className="icon-button login-indicator" aria-label="Account" onClick={() => (isLoggedIn ? handleLogout() : setAuthModalOpen(true))}>
-            <UserRound size={19} />
-            <span>{isLoggedIn ? "Account" : "Login"}</span>
-          </button>
-          <button className="icon-button" aria-label="Wishlist"><Heart size={19} /></button>
-        </div>
-
-        <div className="header-group header-group-cart">
-          <button className="bag-button" onClick={() => setCartOpen(true)} aria-label="Open shopping bag"><ShoppingBag size={19} /><span>{cartCount}</span></button>
+          </details>
+          {categories.map((category) => <details className="ar-nav-dropdown ar-category-dropdown" key={category.name}>
+            <summary>{category.name.toUpperCase()}<ChevronDown size={12} /></summary>
+            <div className="ar-mega-menu ar-category-mega">
+              <div className="ar-mega-links"><small>EXPLORE {category.name.toUpperCase()}</small><button type="button" onClick={() => selectCategory(category.name)}>Shop all {category.name.toLowerCase()} <ArrowRight size={14} /></button><button type="button" onClick={openFavourites}>Player favourites <ArrowRight size={14} /></button><button type="button" onClick={() => { closeNavDropdowns(); setMenuOpen(false); document.querySelector(".ar-categories")?.scrollIntoView({ behavior: "smooth" }); }}>Explore every sport <ArrowRight size={14} /></button><span>{category.note.toUpperCase()} · SELECTED FOR YOUR GAME</span></div>
+              <div className="ar-mega-showcase"><div className="ar-mega-showcase-heading"><Sparkles size={15} /><span>{menuProducts(category.name).length ? "IN STOCK & READY TO PLAY" : "A FEW COURT-SIDE IDEAS"}</span></div>{renderMenuProducts(category.name)}</div>
+            </div>
+          </details>)}
+          <a href="#new-season" onClick={() => setMenuOpen(false)}>OUR STORY</a>
+        </nav>
+        <div className="ar-header-actions">
+          <form className={`ar-search ${searchOpen ? "is-open" : ""}`} role="search" onSubmit={(event) => { event.preventDefault(); setSearchOpen(false); router.push(query.trim() ? `/shop?q=${encodeURIComponent(query.trim())}` : "/shop"); }}>
+            <button className="ar-search-trigger" type="button" aria-label="Search products" aria-expanded={searchOpen} onClick={() => setSearchOpen((open) => !open)}><Search size={17} /></button>
+            <input ref={searchRef} type="search" placeholder="Find your next favourite" aria-label="Search products" value={query} onFocus={() => setSearchOpen(true)} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") setSearchOpen(false); }} />
+            {query && <button className="ar-clear-search" type="button" aria-label="Clear search" onClick={() => { setQuery(""); searchRef.current?.focus(); }}><X size={14} /></button>}
+            {searchOpen && suggestions.length > 0 && <div className="ar-search-results">{suggestions.map((product) => <button type="button" key={product.id} onClick={() => viewProduct(product)}><span>{product.name}</span><small>{product.brand} · VIEW DETAILS</small></button>)}</div>}
+          </form>
+          <Link className="ar-account" href="/account" aria-label="My account"><span>MY ACCOUNT</span><ArrowUpRight size={17} /></Link>
+          <button className="ar-bag-button" type="button" onClick={() => setCartOpen(true)} aria-label={`Open shopping bag, ${cartCount} items`}><ShoppingBag size={19} /><span>BAG</span><b>{cartCount}</b></button>
         </div>
       </header>
 
-      <section className="hero" id="top">
-        <div className="hero-copy"><p className="eyebrow">EQUIPMENT FOR THE DRIVEN</p><h1>PLAY<br /><em>YOUR</em> BEST.</h1><p className="hero-description">Premium equipment and essentials for every rally, match and moment in between.</p><a className="lime-button" href="#shop">SHOP THE COLLECTION <ArrowRight size={17} /></a></div>
-        <div className="hero-photo"><div className="hero-overlay" /><img src="https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=2200&q=95" alt="Badminton racket and shuttlecock on a court" /></div>
-        <div className="hero-foot"><span>01</span><div className="hero-progress"><i /></div><span>03</span></div>
+      <div className="ar-subnav" aria-label="Shop links"><Link href="/classic">← BACK TO CURRENT SITE</Link><span>THE UAE&apos;S HOME FOR RACQUET SPORTS</span><a href="#service">SHOP WITH CONFIDENCE <ArrowUpRight size={12} /></a></div>
+
+      <section className="ar-hero" aria-label="Featured campaign">
+        <img key={campaign.image} className="ar-hero-image" src={campaign.image} alt="" />
+        <div className="ar-hero-shade" />
+        <div className="ar-hero-copy" key={campaignIndex}>
+          <p className="ar-eyebrow"><span /> {campaign.eyebrow}</p>
+          <h1>{campaign.title}</h1>
+          <p className="ar-hero-description">{campaign.description}</p>
+          <Link className="ar-button ar-button-light" href="/shop">{campaign.cta}<ArrowRight size={16} /></Link>
+        </div>
+        <div className="ar-hero-aside"><span>01</span><i /><span>03</span><small>{campaign.label}</small></div>
+        <div className="ar-hero-controls" aria-label="Campaign slides">{campaigns.map((item, index) => <button className={index === campaignIndex ? "is-active" : ""} type="button" key={item.eyebrow} aria-label={`Show campaign ${index + 1}`} aria-pressed={index === campaignIndex} onClick={() => setCampaignIndex(index)} />)}</div>
+        <a className="ar-hero-scroll" href="#service"><ArrowDown size={14} /> SCROLL TO EXPLORE</a>
       </section>
 
-      <section className="trust-strip"><div><strong>01</strong><span>AUTHENTIC PRODUCTS<br /><small>Curated from trusted brands</small></span></div><div><strong>02</strong><span>UAE DELIVERY<br /><small>Across all seven emirates</small></span></div><div><strong>03</strong><span>LOCAL SUPPORT<br /><small>Real people, ready to help</small></span></div><div><strong>04</strong><span>SECURE CHECKOUT<br /><small>Pay with total confidence</small></span></div></section>
+      <section className="ar-service-strip" id="service" aria-label="Shopping benefits">
+        <div><span>01</span><div><strong>MADE FOR THE UAE</strong><small>Local know-how, local support</small></div></div>
+        <div><span>02</span><div><strong>REAL PLAYER ADVICE</strong><small>We play. We get it.</small></div></div>
+        <div><span>03</span><div><strong>SECURE CHECKOUT</strong><small>Shop with confidence</small></div></div>
+        <div><span>04</span><div><strong>READY WHEN YOU ARE</strong><small>Fast delivery across the UAE</small></div></div>
+      </section>
 
-      <ScrollVideo src="/animation1.mp4" eyebrow="MOTION IN EVERY DETAIL" title="Built to move." description="Follow the flow. Every frame reveals the feeling behind the game." />
+      <section className="ar-categories ar-section">
+        <div className="ar-section-heading"><div><p className="ar-eyebrow">PICK YOUR PLAY</p><h2>Every game<br />has its <em>gear.</em></h2></div><p className="ar-section-note">Whether it&apos;s your first rally or your thousandth, start with the good stuff.</p></div>
+        <div className="ar-category-grid">{categories.map((category, index) => <button className="ar-category-card" type="button" key={category.name} onClick={() => selectCategory(category.name)}>
+          <img src={category.image} alt="" loading="lazy" /><span className="ar-category-index">0{index + 1}</span><span className="ar-category-copy"><small>{category.note}</small><strong>{category.name}</strong></span><span className="ar-category-arrow"><ArrowUpRight size={18} /></span>
+        </button>)}</div>
+      </section>
 
-      <AthleteShowcase onBrowse={browseCategory} />
+      <ScrollFilm />
 
-      <Reveal><section className="content-section" id="categories"><div className="section-heading"><div><p className="eyebrow">FIND YOUR GAME</p><h2>Shop by <em>sport.</em></h2></div><a className="text-link" href="#shop">VIEW ALL <ArrowRight size={16} /></a></div><div className="sport-grid">{sports.map((sport, index) => <a className="sport-card" href="#shop" onClick={() => setActiveCategory(sport.name)} key={sport.name} style={{ "--card-delay": `${index * 90}ms` } as React.CSSProperties}><img src={sport.image} alt={sport.name} /><div className="sport-shade" /><div className="sport-label"><span>0{index + 1}</span><div><h3>{sport.name}</h3><p>{products.filter((product) => product.category === sport.name).length} products</p></div><ChevronRight size={20} /></div></a>)}</div></section></Reveal>
-
-      <ScrollVideo src="/animation3.mp4" eyebrow="VICTOR" title="Choose your weapon." description="Explore performance rackets and court shoes from the brands trusted by serious players." align="left" />
-
-      {featuredProducts.length > 0 && <Reveal><section className="featured-product-slider"><div className="featured-product-track" style={{ transform: `translateX(-${featuredIndex * 100}%)` }}>{featuredProducts.map((product) => <article className="featured-product" key={product.id}><div className="featured-product-image">{product.image && <img src={product.image} alt={product.name} />}<span>{product.category.toUpperCase()}</span></div><div className="featured-product-copy"><p className="eyebrow">JUST ADDED</p><div className="featured-brand">{product.brand}</div><h2>{product.name}</h2>{product.rating > 0 && <div className="featured-rating"><Star size={14} fill="currentColor" /> {product.rating} <span>({product.reviews} reviews)</span></div>}<p className="featured-description">Available now in our {product.category.toLowerCase()} collection. Check the current stock before adding it to your bag.</p><div className="featured-specs"><div><small>CATEGORY</small><strong>{product.category}</strong></div><div><small>INVENTORY</small><strong>{product.stock ?? 0} UNITS</strong></div><div><small>BRAND</small><strong>{product.brand}</strong></div></div><div className="featured-buy"><strong>AED {product.price.toLocaleString()}</strong><button className="dark-button" onClick={() => addToCart(product)} disabled={product.stock === 0}>{product.stock === 0 ? "SOLD OUT" : <>ADD TO BAG <ShoppingBag size={16} /></>}</button></div><button className="featured-next" onClick={() => setFeaturedIndex((current) => (current + 1) % featuredProducts.length)} aria-label="Show next featured product"><span>NEXT PRODUCT</span><ArrowRight size={18} /></button></div></article>)}</div><div className="featured-dots" aria-label="Featured products">{featuredProducts.map((product, index) => <button key={product.id} className={featuredIndex === index ? "active" : ""} onClick={() => setFeaturedIndex(index)} aria-label={`Show ${product.name}`} />)}</div></section></Reveal>}
-
-      <Reveal><section className="content-section products-section" id="shop"><div className="section-heading"><div><p className="eyebrow">THE COLLECTION</p><h2>Shop <em>equipment.</em></h2></div><div className="category-tabs">{["All", "Badminton", "Tennis", "Squash", "Accessories"].map((category) => <button data-category={category} className={activeCategory === category ? "active" : ""} key={category} onClick={() => setActiveCategory(category)}>{category}</button>)}</div></div>{query && <p className="search-note">Showing results for <strong>&ldquo;{query}&rdquo;</strong></p>}<div className="product-grid">{!catalogLoaded ? <div className="catalog-empty">Loading products...</div> : catalogError ? <div className="catalog-empty" role="alert">{catalogError}</div> : filteredProducts.length === 0 ? <div className="catalog-empty">{products.length === 0 ? "No products are listed yet. New items will appear here when published." : "No products match your search or category."}</div> : filteredProducts.map((product, index) => <div className="product-reveal" style={{ "--card-delay": `${index * 65}ms` } as React.CSSProperties} key={product.id}><ProductCard product={product} onAdd={addToCart} /></div>)}</div></section></Reveal>
-
-      <ScrollVideo src="/animation2.mp4" eyebrow="THE NEXT RALLY" title="Find your edge." description="Scroll through the motion and discover equipment made for your most committed moments." align="right" />
-
-      <Reveal><section className="campaign"><div className="campaign-image"><img src="https://images.unsplash.com/photo-1599058917212-d750089bc07e?auto=format&fit=crop&w=1400&q=85" alt="Runner in motion" /></div><div className="campaign-copy"><p className="eyebrow">THE AL RAED STANDARD</p><h2>Made for<br /><em>the next point.</em></h2><p>From first serve to final set, the right kit changes everything. Explore gear selected for players who show up.</p><a className="dark-button" href="#shop">DISCOVER THE EDIT <ArrowRight size={16} /></a></div></section></Reveal>
-
-      <Reveal><section className="store-section"><div className="store-intro"><p className="eyebrow">TRY IT IN PERSON</p><h2>Feel the<br /><em>difference.</em></h2><p>Not sure which racket is right for your game? Visit one of our stores, pick up the latest gear and get closer to your next best match.</p><a className="lime-button" href="#stores">FIND A STORE <ArrowRight size={16} /></a></div><div className="store-list" id="stores"><a className="store-card" href="https://www.google.com/maps/search/?api=1&query=Al+Raed+Sports+Madinat+Zayed" target="_blank" rel="noreferrer"><span className="store-number">01</span><div><MapPin size={18} /><h3>Al Raed Sports<br />Madinat Zayed</h3><p>United Arab Emirates <ArrowRight size={14} /></p></div></a><a className="store-card" href="https://www.google.com/maps/search/?api=1&query=Alraed+Sports+Shop+UAE" target="_blank" rel="noreferrer"><span className="store-number">02</span><div><MapPin size={18} /><h3>Alraed Sports<br />Shop</h3><p>United Arab Emirates <ArrowRight size={14} /></p></div></a><a className="store-card" href="https://www.google.com/maps/search/?api=1&query=Yonex+Store+Bahrain" target="_blank" rel="noreferrer"><span className="store-number">03</span><div><MapPin size={18} /><h3>Yonex Store<br />Bahrain</h3><p>Kingdom of Bahrain <ArrowRight size={14} /></p></div></a></div></section></Reveal>
-
-      <Reveal><section className="content-section brands-section"><div className="section-heading"><div><p className="eyebrow">TRUSTED BY PLAYERS</p><h2>Brands that<br /><em>move with you.</em></h2></div><a className="text-link" href="#shop">ALL BRANDS <ArrowRight size={16} /></a></div><div className="brand-list"><span>YONEX</span><span>WILSON</span><span>HEAD</span><span>BABOLAT</span><span>VICTOR</span></div><div className="brand-marquee" aria-label="Al Raed Sports product categories"><div><span>RACKETS</span><i>✦</i><span>COURT SHOES</span><i>✦</i><span>STRINGS & GRIPS</span><i>✦</i><span>PLAYER APPAREL</span><i>✦</i><span>RACKETS</span><i>✦</i><span>COURT SHOES</span><i>✦</i></div></div></section></Reveal>
-
-      <div className="quick-rail"><a href="#shop" aria-label="Jump to products"><ShoppingBag size={16} /></a><a href="#categories" aria-label="Jump to sports"><ChevronRight size={16} /></a><button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} aria-label="Back to top">↑</button></div>
-
-      <footer className="footer"><div className="footer-top"><div><a className="logo footer-logo" href="#top"><img src="/IMG_8477.jpg%2010-33-16-710.jpg" alt="" /><span>AL RAED SPORTS</span></a><p>Premium sports equipment<br />for the UAE in motion.</p></div><div className="footer-links"><div><h4>SHOP</h4><a href="#shop">All products</a><a href="#categories">Badminton</a><a href="#categories">Tennis</a><a href="#categories">Squash</a></div><div><h4>ESSENTIALS</h4><a href="#shop">Rackets</a><a href="#shop">Shoes</a><a href="#shop">Strings & grips</a><a href="#shop">Socks & apparel</a></div><div><h4>FOLLOW</h4><a href="#top">Instagram</a><a href="#top">WhatsApp</a><a href="https://alraedgroup.ae">Al Raed Group</a></div></div><div className="newsletter"><h4>STAY IN THE GAME</h4><p>New drops, player edits and store news.</p><div className="email-field"><input placeholder="Your email address" aria-label="Your email address" /><button aria-label="Subscribe"><ArrowRight size={17} /></button></div></div></div><div className="footer-bottom"><span>© 2026 AL RAED SPORTS</span><span>AN AL RAED GROUP OF COMPANIES BUSINESS</span><span>MADE FOR THE UAE</span></div></footer>
-
-      {authModalOpen && (
-        <div className="drawer-backdrop" onClick={() => setAuthModalOpen(false)}>
-          <aside className="auth-modal" onClick={(event) => event.stopPropagation()}>
-            <div className="auth-modal-header">
-              <p className="eyebrow">SIGN IN REQUIRED</p>
-              <button onClick={() => setAuthModalOpen(false)} aria-label="Close login dialog"><X size={18} /></button>
-            </div>
-
-            <h3>Please login to add items to your cart.</h3>
-            <p>Use your Google account to continue shopping and place your order.</p>
-
-            {authError && <div className="auth-error">{authError}</div>}
-
-            <button className="auth-login-button" onClick={handleGoogleLogin}>
-              <span className="google-mark">G</span>
-              Continue with Google
-            </button>
-
-            <div className="auth-helpers">
-              <span>Secure sign-in</span>
-              <span>No payment yet</span>
-            </div>
-          </aside>
+      <section className="ar-products-section ar-section" id="shop-the-game">
+        <div className="ar-products-top">
+          <div><p className="ar-eyebrow">{query ? "A GOOD PLACE TO START" : "FRESH FROM THE COURT"}</p><h2>{productHeading}<span className="ar-heading-star">✳</span></h2></div>
+          <div className="ar-product-controls"><div className="ar-filter-tabs" aria-label="Filter products by sport">{["All", "Badminton", "Tennis", "Squash", "Accessories"].map((category) => <button className={activeCategory === category ? "is-active" : ""} key={category} type="button" aria-pressed={activeCategory === category} onClick={() => { setActiveCategory(category); setQuery(""); }}>{category}</button>)}</div><div className="ar-rail-buttons"><button type="button" aria-label="Scroll products left" onClick={() => scrollRail("left")}><ChevronLeft size={18} /></button><button type="button" aria-label="Scroll products right" onClick={() => scrollRail("right")}><ChevronRight size={18} /></button></div></div>
         </div>
-      )}
+        {catalogState === "loading" ? <div className="ar-status"><span className="ar-loader" />Finding your next favourite…</div> : catalogState === "error" ? <div className="ar-status ar-status-error" role="alert"><strong>We couldn&apos;t reach the shop right now.</strong><span>{catalogError}</span><button type="button" onClick={() => window.location.reload()}>TRY AGAIN <ArrowRight size={14} /></button></div> : productList.length === 0 ? <div className="ar-status">No products match this search just yet. Try another sport or search term.</div> : <div className="ar-product-rail" ref={railRef}>{productList.map((product) => <ProductTile key={product.id} product={product} liked={wishlist.includes(product.id)} onLike={toggleWishlist} onAdd={addToCart} onView={viewProduct} added={justAdded.includes(product.id)} />)}</div>}
+        <div className="ar-products-foot"><span>MADE FOR THE MATCH. AND EVERYTHING BEFORE IT.</span><span>{productList.length} {productList.length === 1 ? "PICK" : "PICKS"} TO EXPLORE</span></div>
+      </section>
 
-      {checkoutOpen && (
-        <div className="drawer-backdrop" onClick={() => setCheckoutOpen(false)}>
-          <aside className="checkout-modal" onClick={(event) => event.stopPropagation()}>
-            <div className="drawer-heading">
-              <div>
-                <p className="eyebrow">ORDER DETAILS</p>
-                <h2>Checkout</h2>
-              </div>
-              <button onClick={() => setCheckoutOpen(false)} aria-label="Close checkout form"><X size={21} /></button>
-            </div>
+      <section className="ar-editorial" id="new-season">
+        <div className="ar-editorial-photo"><img src="https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=1800&q=90" alt="A badminton player reaching for a shot on court" loading="lazy" /><span>YOUR GAME<br />IS A GOOD<br />PLACE TO BE.</span></div>
+        <div className="ar-editorial-copy"><p className="ar-eyebrow">MORE THAN A SHOP</p><h2>We know<br />that <em>feeling.</em></h2><p>That first clean hit. One more game after the sun goes down. The kit that just feels right. Al Raed is here for the love of the rally—wherever you&apos;re starting, and wherever you&apos;re headed.</p><Link className="ar-button ar-button-outline" href="/classic">MEET AL RAED <ArrowUpRight size={16} /></Link><span className="ar-editorial-mark">SINCE DAY ONE <i>✳</i></span></div>
+      </section>
 
-            <div className="checkout-form">
-              <div className="checkout-customer"><UserRound size={17} /><div><strong>{customerProfile?.full_name || userName || "Customer"}</strong><span>{customerProfile?.email}</span><span>{customerProfile?.phone}</span></div></div>
-              <label>
-                <span>Deliver to</span>
-                <select className="checkout-address-select" value={selectedAddressId} onChange={(event) => setSelectedAddressId(event.target.value)}>
-                  {(customerProfile?.addresses ?? []).map((address) => <option key={address.id} value={address.id}>{address.label} · {address.city}{address.is_default ? " · Default" : ""}</option>)}
-                </select>
-              </label>
-              {(() => {
-                const address = customerProfile?.addresses?.find((item) => item.id === selectedAddressId);
-                return address ? <div className="checkout-address-summary"><MapPin size={15} /><span>{address.address}<br />{address.city}</span><button onClick={() => { setCheckoutOpen(false); router.push("/account"); }}>Change</button></div> : null;
-              })()}
-              <label>
-                <span>Delivery note <small>Optional</small></span>
-                <textarea value={checkoutNotes} onChange={(event) => setCheckoutNotes(event.target.value)} placeholder="Anything the delivery team should know?" rows={2} />
-              </label>
-            </div>
+      <section className="ar-bestsellers ar-section" id="player-favourites">
+        <div className="ar-section-heading"><div><p className="ar-eyebrow">THE COURT&apos;S FAVOURITES</p><h2>Player <em>approved.</em></h2></div><Link className="ar-text-link" href="/shop">SHOP ALL GEAR <ArrowRight size={16} /></Link></div>
+        <div className="ar-best-grid">{bestSellers.slice(0, 4).map((product) => <ProductTile key={product.id} product={product} liked={wishlist.includes(product.id)} onLike={toggleWishlist} onAdd={addToCart} onView={viewProduct} added={justAdded.includes(product.id)} />)}</div>
+      </section>
 
-            <div className="drawer-summary">
-              <div>
-                <span>Total</span>
-                <strong>AED {cartTotal.toLocaleString()}</strong>
-              </div>
-              <p>Your saved details and order summary will be sent to Al Raed Sports for confirmation.</p>
-              {authError && <div className="auth-error" role="alert">{authError}</div>}
-              <button className="dark-button full-button" onClick={handleCheckoutSubmit} disabled={checkoutBusy}>{checkoutBusy ? "SAVING YOUR ORDER..." : "CONFIRM & SEND VIA WHATSAPP"} <ArrowRight size={16} /></button>
-            </div>
-          </aside>
-        </div>
-      )}
+      <footer className="ar-footer">
+        <Link className="ar-wordmark ar-footer-logo" href="/" aria-label="Al Raed Sports home"><span className="ar-mark">AR</span><span>AL RAED<small>SPORTS</small></span></Link>
+        <p>For the love of the rally.<br /><span>Made for players across the UAE.</span></p>
+        <div className="ar-footer-links"><Link href="/shop">SHOP THE COLLECTION</Link><Link href="/account">YOUR ACCOUNT</Link><Link href="/classic">BACK TO CURRENT SITE</Link></div>
+        <small className="ar-copyright">© {new Date().getFullYear()} AL RAED SPORTS · UNITED ARAB EMIRATES</small>
+      </footer>
 
-      {checkoutSuccess && <div className="checkout-success-toast" role="status"><span><Check size={16} /></span><div><strong>Order request sent</strong><p>{checkoutSuccess}</p></div><button onClick={() => setCheckoutSuccess(null)} aria-label="Dismiss notification"><X size={16} /></button></div>}
+      <ProductDetailDialog key={selectedProduct?.id ?? "closed"} product={selectedProduct} onClose={() => setSelectedProduct(null)} onAdd={addProductDetailsToCart} />
 
-      {cartOpen && <div className="drawer-backdrop" onClick={() => setCartOpen(false)}><aside className="cart-drawer" onClick={(event) => event.stopPropagation()}><div className="drawer-heading"><div><p className="eyebrow">YOUR SELECTION</p><h2>Shopping bag <span>({cartCount})</span></h2></div><button onClick={() => setCartOpen(false)} aria-label="Close shopping bag"><X size={21} /></button></div>{cart.length === 0 ? <div className="empty-bag"><ShoppingBag size={30} /><p>Your bag is waiting.</p><span>Add something that makes you want to play.</span></div> : <><div className="drawer-items">{cart.map((item) => <div className="drawer-item" key={item.product.id}><img src={item.product.image} alt={item.product.name} /><div><strong>{item.product.brand}</strong><p>{item.product.name}</p><span>AED {(item.product.price * item.quantity).toLocaleString()}</span></div><div className="drawer-item-actions"><div className="quantity-stepper"><button onClick={() => updateQuantity(item.product.id, -1)}>-</button><span>{item.quantity}</span><button onClick={() => updateQuantity(item.product.id, 1)}>+</button></div><button aria-label="Remove item" onClick={() => setCart((current) => current.filter((cartItem) => cartItem.product.id !== item.product.id))}><X size={15} /></button></div></div>)}</div><div className="drawer-summary"><div><span>Subtotal</span><strong>AED {cartTotal.toLocaleString()}</strong></div><p>Delivery calculated at checkout.</p><button className="dark-button full-button" onClick={openCheckout}>CHECKOUT <ArrowRight size={16} /></button></div></>}</aside></div>}
+      {cartOpen && <div className="ar-drawer-backdrop" onClick={() => setCartOpen(false)}>
+        <aside className="ar-cart-drawer" role="dialog" aria-modal="true" aria-labelledby="ar-cart-title" onClick={(event) => event.stopPropagation()}>
+          <div className="ar-cart-heading"><div><p className="ar-eyebrow">YOUR GAME, GATHERED</p><h2 id="ar-cart-title">Your bag <span>({cartCount})</span></h2></div><button type="button" aria-label="Close bag" onClick={() => setCartOpen(false)}><X /></button></div>
+          {cart.length === 0 ? <div className="ar-empty-cart"><ShoppingBag size={30} /><strong>A little room for something good.</strong><p>Your bag is waiting for its first match-ready pick.</p><Link className="ar-button ar-button-light" href="/shop" onClick={() => setCartOpen(false)}>FIND YOUR GEAR <ArrowRight size={15} /></Link></div> : <>
+            <div className="ar-cart-items">{cart.map(({ product, quantity }) => <article className="ar-cart-line" key={product.id}><div className="ar-cart-image">{product.image && <img src={product.image} alt="" />}</div><div className="ar-cart-line-copy"><small>{product.brand}</small><strong>{product.name}</strong><span>{money(product.price)}</span><div className="ar-quantity"><button type="button" aria-label={`Remove one ${product.name}`} onClick={() => changeQuantity(product.id, -1)}><Minus size={13} /></button><span>{quantity}</span><button type="button" aria-label={`Add one ${product.name}`} onClick={() => changeQuantity(product.id, 1)} disabled={quantity >= Math.min(product.stock, 50)}><Plus size={13} /></button></div></div><button className="ar-remove-line" type="button" aria-label={`Remove ${product.name}`} onClick={() => setCart((items) => items.filter((line) => line.product.id !== product.id))}><X size={16} /></button></article>)}</div>
+            <div className="ar-cart-bottom"><div><span>SUBTOTAL</span><strong>{money(cartTotal)}</strong></div><small>Delivery and any applicable fees are confirmed when your order is placed.</small><button className="ar-button ar-button-light ar-checkout" type="button" onClick={handleWhatsAppCheckout}>CONTINUE ON WHATSAPP <ArrowRight size={16} /></button></div>
+          </>}
+        </aside>
+      </div>}
     </main>
   );
 }
