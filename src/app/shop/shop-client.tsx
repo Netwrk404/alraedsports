@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   ArrowLeft,
   ArrowRight,
+  ArrowUp,
   ArrowUpRight,
   Check,
   ChevronDown,
@@ -310,10 +311,6 @@ export default function ShopClient({ initialCategory, initialQuery }: { initialC
       <div className="ar-announcement"><span>MADE FOR THE UAE</span><span>·</span><span>FREE DELIVERY ON ORDERS OVER AED 200</span></div>
       <header className="ar-header ar-shop-header">
         <Link className="ar-wordmark" href="/" aria-label="Al Raed Sports home"><img className="ar-brand-logo" src="/IMG_8477.jpg%2010-33-16-710.jpg" alt="" /><span>AL RAED<small>SPORTS</small></span></Link>
-        <nav className="ar-shop-header-nav" aria-label="Shop categories">
-          <Link href="/shop" className={category === "All" ? "is-active" : ""}>ALL GEAR</Link>
-          {categories.slice(1).map((item) => <Link href={`/shop?category=${encodeURIComponent(item)}`} className={category === item ? "is-active" : ""} key={item}>{item.toUpperCase()}</Link>)}
-        </nav>
         <div className="ar-shop-header-actions">
           <Link className="ar-shop-home-link" href="/"><ArrowLeft size={14} /><span>HOME</span></Link>
           <button className="ar-bag-button" type="button" onClick={() => setCartOpen(true)} aria-label={`Open shopping bag, ${cartCount} items`}>
@@ -390,6 +387,11 @@ export default function ShopClient({ initialCategory, initialQuery }: { initialC
       </div>
 
       <footer className="ar-shop-footer"><Link className="ar-wordmark" href="/"><img className="ar-brand-logo" src="/IMG_8477.jpg%2010-33-16-710.jpg" alt="" /><span>AL RAED<small>SPORTS</small></span></Link><p>For the love of the rally.<br /><span>Made for players across the UAE.</span></p><Link href="/">BACK TO THE STOREFRONT <ArrowUpRight size={14} /></Link></footer>
+
+      <div className="ar-floating-actions ar-floating-actions-shop" aria-label="Quick actions">
+        <button className="ar-floating-button ar-floating-top" type="button" aria-label="Scroll to top" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}><ArrowUp size={15} /></button>
+        <button className="ar-floating-button ar-floating-cart" type="button" onClick={() => setCartOpen(true)} aria-label={`Open shopping bag, ${cartCount} items`}><ShoppingBag size={15} />{cartCount > 0 && <b>{cartCount}</b>}</button>
+      </div>
 
       <ProductDetailDialog key={selectedProduct?.id ?? "closed"} product={selectedProduct} onClose={() => setSelectedProduct(null)} onAdd={(product, quantity) => {
         if (addToCart(product, quantity)) {
