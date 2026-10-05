@@ -474,7 +474,7 @@ export default function Home() {
         </div>
       </header>
 
-      <div className="ar-subnav" aria-label="Shop links"><Link href="/classic">← BACK TO CURRENT SITE</Link><span>THE UAE&apos;S HOME FOR RACQUET SPORTS</span><a href="#service">SHOP WITH CONFIDENCE <ArrowUpRight size={12} /></a></div>
+      <div className="ar-subnav" aria-label="Shop links"><span>THE UAE&apos;S HOME FOR RACQUET SPORTS</span><a href="#service">SHOP WITH CONFIDENCE <ArrowUpRight size={12} /></a></div>
 
       <section className="ar-hero" aria-label="Featured campaign">
         <img key={campaign.image} className="ar-hero-image" src={campaign.image} alt="" />
@@ -540,7 +540,7 @@ export default function Home() {
 
       <section className="ar-editorial" id="new-season">
         <div className="ar-editorial-photo"><img src="https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=1800&q=90" alt="A badminton player reaching for a shot on court" loading="lazy" /><span>YOUR GAME<br />IS A GOOD<br />PLACE TO BE.</span></div>
-        <div className="ar-editorial-copy"><p className="ar-eyebrow">MORE THAN A SHOP</p><h2>We know<br />that <em>feeling.</em></h2><p>That first clean hit. One more game after the sun goes down. The kit that just feels right. Al Raed is here for the love of the rally—wherever you&apos;re starting, and wherever you&apos;re headed.</p><Link className="ar-button ar-button-outline" href="/classic">MEET AL RAED <ArrowUpRight size={16} /></Link><span className="ar-editorial-mark">SINCE DAY ONE <i>✳</i></span></div>
+        <div className="ar-editorial-copy"><p className="ar-eyebrow">MORE THAN A SHOP</p><h2>We know<br />that <em>feeling.</em></h2><p>That first clean hit. One more game after the sun goes down. The kit that just feels right. Al Raed is here for the love of the rally—wherever you&apos;re starting, and wherever you&apos;re headed.</p><Link className="ar-button ar-button-outline" href="#ar-store-list">FIND A STORE <ArrowUpRight size={16} /></Link><span className="ar-editorial-mark">SINCE DAY ONE <i>✳</i></span></div>
       </section>
 
       <section className="ar-bestsellers ar-section" id="player-favourites">
@@ -595,7 +595,7 @@ export default function Home() {
           <h3>ESSENTIALS</h3><Link href="/shop?q=racquet">Racquets</Link><Link href="/shop?q=shoe">Court shoes</Link><Link href="/shop?q=grip">Strings &amp; grips</Link><Link href="/shop?q=apparel">Socks &amp; apparel</Link>
         </nav>
         <nav className="ar-footer-column" aria-label="More links">
-          <h3>DISCOVER</h3><Link href="/shop">Shop all gear</Link><Link href="/account">Your account</Link><Link href="/classic">Back to current site</Link><a href="https://alraedgroup.ae" target="_blank" rel="noreferrer">Al Raed Group</a>
+          <h3>DISCOVER</h3><Link href="/shop">Shop all gear</Link><Link href="/account">Your account</Link><a href="#ar-store-list">Find a store</a><a href="https://alraedgroup.ae" target="_blank" rel="noreferrer">Al Raed Group</a>
         </nav>
         <div className="ar-footer-newsletter">
           <h3>STAY IN THE GAME</h3>
