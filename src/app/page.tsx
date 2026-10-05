@@ -159,12 +159,11 @@ function ScrollFilm({
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const mobile = window.matchMedia("(max-width: 700px)").matches;
 
-    if (reduceMotion) {
-      video.pause();
-      return;
-    }
-
     if (mobile) {
+      if (reduceMotion) {
+        video.pause();
+        return;
+      }
       video.loop = true;
       video.play().catch(() => undefined);
       return;
