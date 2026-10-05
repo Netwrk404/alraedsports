@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import AthleteShowcase from "./AthleteShowcase";
 import ProductDetailDialog from "@/components/storefront/ProductDetailDialog";
 import { mapStoreProduct, type CartLine, type StoreProduct } from "@/lib/store-products";
 import {
@@ -15,6 +16,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Heart,
+  MapPin,
   Menu,
   Minus,
   Plus,
@@ -124,7 +126,27 @@ function ProductTile({
   );
 }
 
-function ScrollFilm() {
+function ScrollFilm({
+  src,
+  eyebrow,
+  title,
+  description,
+  sectionLabel,
+  ctaLabel,
+  ctaHref,
+  align = "left",
+  index,
+}: {
+  src: string;
+  eyebrow: string;
+  title: React.ReactNode;
+  description: string;
+  sectionLabel: string;
+  ctaLabel: string;
+  ctaHref: string;
+  align?: "left" | "right";
+  index: string;
+}) {
   const sectionRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const frameRef = useRef<number | null>(null);
@@ -179,18 +201,18 @@ function ScrollFilm() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="ar-scroll-film" aria-label="Choose your equipment">
+    <section ref={sectionRef} className={`ar-scroll-film ${align === "right" ? "is-right" : ""}`} aria-label={sectionLabel}>
       <div className="ar-scroll-film-stage">
-        <video ref={videoRef} className="ar-scroll-film-video" src="/animation3.mp4" muted playsInline preload="metadata" aria-label="Racquet sports equipment in motion" />
+        <video ref={videoRef} className="ar-scroll-film-video" src={src} muted playsInline preload="metadata" aria-label={sectionLabel} />
         <div className="ar-scroll-film-shade" />
         <div className="ar-scroll-film-copy">
-          <p className="ar-eyebrow"><span /> VICTOR · YONEX · MADE FOR YOUR GAME</p>
-          <h2>Choose your<br /><em>weapon.</em></h2>
-          <p>Every rally starts somewhere. Explore performance racquets and court shoes from the brands players trust.</p>
-          <Link className="ar-button ar-button-light" href="/shop?category=Badminton">FIND YOUR NEXT RACQUET <ArrowRight size={16} /></Link>
+          <p className="ar-eyebrow"><span /> {eyebrow}</p>
+          <h2>{title}</h2>
+          <p>{description}</p>
+          <Link className="ar-button ar-button-light" href={ctaHref}>{ctaLabel} <ArrowRight size={16} /></Link>
           <span className="ar-scroll-film-hint"><span /> SCROLL TO FEEL THE DIFFERENCE</span>
         </div>
-        <div className="ar-scroll-film-index"><span>01</span><i /><span>03</span><small>BUILT FOR THE NEXT POINT</small></div>
+        <div className="ar-scroll-film-index"><span>{index}</span><i /><span>02</span><small>BUILT FOR THE NEXT POINT</small></div>
       </div>
     </section>
   );
@@ -483,7 +505,18 @@ export default function Home() {
         </button>)}</div>
       </section>
 
-      <ScrollFilm />
+      <ScrollFilm
+        src="/animation3.mp4"
+        eyebrow="VICTOR · YONEX · MADE FOR YOUR GAME"
+        title={<>Choose your<br /><em>weapon.</em></>}
+        description="Every rally starts somewhere. Explore performance racquets and court shoes from the brands players trust."
+        sectionLabel="Choose your equipment"
+        ctaLabel="FIND YOUR NEXT RACQUET"
+        ctaHref="/shop?category=Badminton"
+        index="01"
+      />
+
+      <AthleteShowcase onBrowse={() => selectCategory("Badminton")} />
 
       <section className="ar-products-section ar-section" id="shop-the-game">
         <div className="ar-products-top">
@@ -493,6 +526,18 @@ export default function Home() {
         {catalogState === "loading" ? <div className="ar-status"><span className="ar-loader" />Finding your next favourite…</div> : catalogState === "error" ? <div className="ar-status ar-status-error" role="alert"><strong>We couldn&apos;t reach the shop right now.</strong><span>{catalogError}</span><button type="button" onClick={() => window.location.reload()}>TRY AGAIN <ArrowRight size={14} /></button></div> : productList.length === 0 ? <div className="ar-status">No products match this search just yet. Try another sport or search term.</div> : <div className="ar-product-rail" ref={railRef}>{productList.map((product) => <ProductTile key={product.id} product={product} liked={wishlist.includes(product.id)} onLike={toggleWishlist} onAdd={addToCart} onView={viewProduct} added={justAdded.includes(product.id)} />)}</div>}
         <div className="ar-products-foot"><span>MADE FOR THE MATCH. AND EVERYTHING BEFORE IT.</span><span>{productList.length} {productList.length === 1 ? "PICK" : "PICKS"} TO EXPLORE</span></div>
       </section>
+
+      <ScrollFilm
+        src="/animation2.mp4"
+        eyebrow="THE NEXT RALLY"
+        title={<>Find your<br /><em>edge.</em></>}
+        description="Scroll through the motion and discover equipment made for your most committed moments."
+        sectionLabel="Find your edge"
+        ctaLabel="EXPLORE ALL GEAR"
+        ctaHref="/shop"
+        align="right"
+        index="02"
+      />
 
       <section className="ar-editorial" id="new-season">
         <div className="ar-editorial-photo"><img src="https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=1800&q=90" alt="A badminton player reaching for a shot on court" loading="lazy" /><span>YOUR GAME<br />IS A GOOD<br />PLACE TO BE.</span></div>
@@ -504,11 +549,63 @@ export default function Home() {
         <div className="ar-best-grid">{bestSellers.slice(0, 4).map((product) => <ProductTile key={product.id} product={product} liked={wishlist.includes(product.id)} onLike={toggleWishlist} onAdd={addToCart} onView={viewProduct} added={justAdded.includes(product.id)} />)}</div>
       </section>
 
-      <footer className="ar-footer">
-        <Link className="ar-wordmark ar-footer-logo" href="/" aria-label="Al Raed Sports home"><span className="ar-mark">AR</span><span>AL RAED<small>SPORTS</small></span></Link>
-        <p>For the love of the rally.<br /><span>Made for players across the UAE.</span></p>
-        <div className="ar-footer-links"><Link href="/shop">SHOP THE COLLECTION</Link><Link href="/account">YOUR ACCOUNT</Link><Link href="/classic">BACK TO CURRENT SITE</Link></div>
-        <small className="ar-copyright">© {new Date().getFullYear()} AL RAED SPORTS · UNITED ARAB EMIRATES</small>
+      <section className="ar-store-visit" aria-labelledby="ar-store-visit-title">
+        <div className="ar-store-visit-intro">
+          <p className="ar-eyebrow">TRY IT IN PERSON</p>
+          <h2 id="ar-store-visit-title">Feel the<br /><em>difference.</em></h2>
+          <p>Not sure which racquet is right for your game? Visit one of our stores, pick up the latest gear and get closer to your next best match.</p>
+          <a className="ar-button ar-button-light" href="#ar-store-list">FIND A STORE <ArrowRight size={16} /></a>
+        </div>
+        <div className="ar-store-list" id="ar-store-list">
+          <a className="ar-store-card" href="https://www.google.com/maps/search/?api=1&query=Al+Raed+Sports+Madinat+Zayed" target="_blank" rel="noreferrer">
+            <span className="ar-store-number">01</span><div><MapPin size={18} /><h3>Al Raed Sports<br />Madinat Zayed</h3><p>United Arab Emirates <ArrowRight size={14} /></p></div>
+          </a>
+          <a className="ar-store-card" href="https://www.google.com/maps/search/?api=1&query=Alraed+Sports+Shop+UAE" target="_blank" rel="noreferrer">
+            <span className="ar-store-number">02</span><div><MapPin size={18} /><h3>Alraed Sports<br />Shop</h3><p>United Arab Emirates <ArrowRight size={14} /></p></div>
+          </a>
+          <a className="ar-store-card" href="https://www.google.com/maps/search/?api=1&query=Yonex+Store+Bahrain" target="_blank" rel="noreferrer">
+            <span className="ar-store-number">03</span><div><MapPin size={18} /><h3>Yonex Store<br />Bahrain</h3><p>Kingdom of Bahrain <ArrowRight size={14} /></p></div>
+          </a>
+        </div>
+      </section>
+
+      <section className="ar-brands ar-section" aria-labelledby="ar-brands-title">
+        <div className="ar-section-heading">
+          <div><p className="ar-eyebrow">TRUSTED BY PLAYERS</p><h2 id="ar-brands-title">Brands that<br /><em>move with you.</em></h2></div>
+          <Link className="ar-text-link" href="/shop">ALL BRANDS <ArrowRight size={16} /></Link>
+        </div>
+        <div className="ar-brand-list" aria-label="Featured brands">
+          {["YONEX", "WILSON", "HEAD", "BABOLAT", "VICTOR"].map((brand) => <Link key={brand} href={`/shop?q=${encodeURIComponent(brand)}`}>{brand}</Link>)}
+        </div>
+        <div className="ar-brand-marquee" aria-label="Racquets, court shoes, strings and grips, player apparel">
+          <div className="ar-brand-marquee-track">
+            {["RACQUETS", "COURT SHOES", "STRINGS & GRIPS", "PLAYER APPAREL", "RACQUETS", "COURT SHOES", "STRINGS & GRIPS", "PLAYER APPAREL"].map((item, index) => <span key={`${item}-${index}`}>{item}<i>✦</i></span>)}
+          </div>
+        </div>
+      </section>
+
+      <footer className="ar-footer ar-footer-rich">
+        <div className="ar-footer-brand">
+          <Link className="ar-wordmark ar-footer-logo" href="/" aria-label="Al Raed Sports home"><span className="ar-mark">AR</span><span>AL RAED<small>SPORTS</small></span></Link>
+          <p>Premium sports equipment<br /><span>for the UAE in motion.</span></p>
+        </div>
+        <nav className="ar-footer-column" aria-label="Shop links">
+          <h3>SHOP</h3><Link href="/shop">All products</Link><Link href="/shop?category=Badminton">Badminton</Link><Link href="/shop?category=Tennis">Tennis</Link><Link href="/shop?category=Squash">Squash</Link>
+        </nav>
+        <nav className="ar-footer-column" aria-label="Equipment links">
+          <h3>ESSENTIALS</h3><Link href="/shop?q=racquet">Racquets</Link><Link href="/shop?q=shoe">Court shoes</Link><Link href="/shop?q=grip">Strings &amp; grips</Link><Link href="/shop?q=apparel">Socks &amp; apparel</Link>
+        </nav>
+        <nav className="ar-footer-column" aria-label="More links">
+          <h3>DISCOVER</h3><Link href="/shop">Shop all gear</Link><Link href="/account">Your account</Link><Link href="/classic">Back to current site</Link><a href="https://alraedgroup.ae" target="_blank" rel="noreferrer">Al Raed Group</a>
+        </nav>
+        <div className="ar-footer-newsletter">
+          <h3>STAY IN THE GAME</h3>
+          <p>New drops, player edits and store news.</p>
+          <Link href="/shop">EXPLORE THE LATEST <ArrowRight size={15} /></Link>
+        </div>
+        <div className="ar-copyright">
+          <span>© {new Date().getFullYear()} AL RAED SPORTS</span><span>AN AL RAED GROUP OF COMPANIES BUSINESS</span><span>MADE FOR THE UAE</span>
+        </div>
       </footer>
 
       <ProductDetailDialog key={selectedProduct?.id ?? "closed"} product={selectedProduct} onClose={() => setSelectedProduct(null)} onAdd={addProductDetailsToCart} />

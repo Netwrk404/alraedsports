@@ -319,7 +319,7 @@ export default function AthleteShowcase({ onBrowse }: { onBrowse?: (category: st
           style={{ transform: getSubjectTransform(active?.id ?? null) }}
         />
         <div className="athlete-hotspots" aria-label="Athlete product areas">
-          {hotspots.map((hotspot) => <button key={hotspot.id} className={`athlete-hotspot ${activeId === hotspot.id ? "active" : ""}`} style={{ left: `${50 + hotspot.point[0] * 25}%`, top: `${100 - hotspot.point[1] * 19}%` }} onPointerEnter={() => window.dispatchEvent(new CustomEvent("alraed-athlete-focus", { detail: hotspot.id }))} onPointerLeave={clearFocus} onPointerDown={() => browse(hotspot)} aria-label={`View ${hotspot.label}`}><span /></button>)}
+          {hotspots.map((hotspot) => <button key={hotspot.id} className={`athlete-hotspot ${activeId === hotspot.id ? "active" : ""}`} style={{ left: `${50 + hotspot.point[0] * 25}%`, top: `${100 - hotspot.point[1] * 19}%` }} onPointerEnter={() => window.dispatchEvent(new CustomEvent("alraed-athlete-focus", { detail: hotspot.id }))} onPointerLeave={clearFocus} onClick={() => browse(hotspot)} aria-label={`View ${hotspot.label}`}><span /></button>)}
         </div>
         </div>
         {active && <div className="athlete-card"><span className="eyebrow">IN THE FRAME</span><strong>{active.label}</strong><a href="#shop" onClick={(event) => { event.preventDefault(); browse(active); }}>BROWSE <ArrowUpRight size={14} /></a></div>}
