@@ -760,9 +760,9 @@ body { background: #090b0f; color: #f5f7fa; }
 	.ar-category-copy strong { font-size: clamp(17px, 4vw, 23px); }
 	.ar-category-index { left: 15px; top: 14px; }
 	.ar-category-arrow { bottom: 14px; height: 28px; right: 12px; width: 28px; }
-	.ar-scroll-film { height: 72svh; min-height: 480px; }
-	.ar-scroll-film-stage { height: 72svh; min-height: 480px; width: 100%; }
-	.ar-scroll-film-video { object-position: 58% center; }
+	.ar-scroll-film { height: 62svh; min-height: 380px; }
+	.ar-scroll-film-stage { height: 62svh; min-height: 380px; width: 100%; }
+	.ar-scroll-film-video { object-fit: contain; object-position: center top; }
 	.ar-scroll-film-shade { background: linear-gradient(90deg, rgba(3,7,13,.82), rgba(3,7,13,.36) 70%), linear-gradient(0deg, rgba(3,7,13,.78), transparent 66%); }
 	.ar-scroll-film-copy { bottom: 38px; left: 7vw; max-width: 82vw; top: auto; transform: none; }
 	.ar-scroll-film-copy .ar-eyebrow { font-size: 7px; margin-bottom: 12px; }
