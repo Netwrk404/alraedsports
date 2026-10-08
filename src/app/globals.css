@@ -1161,3 +1161,8 @@ body { background: #090b0f; color: #f5f7fa; }
 	.header-group-profile .login-indicator { display: inline-flex; }
 	.header-group-profile .login-indicator span { display: none; }
 }
+@media (max-width: 760px) {
+	input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+	textarea,
+	select { font-size: 16px; }
+}
