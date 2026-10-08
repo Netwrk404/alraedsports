@@ -179,6 +179,7 @@ function ScrollFilm({
     };
     const pausePlayback = () => video.pause();
     const showPlaybackError = (error: unknown) => {
+      if (error instanceof DOMException && error.name === "AbortError") return;
       console.error(`Unable to play the ${sectionLabel} video.`, error);
       setPlaybackError(true);
     };
@@ -220,12 +221,6 @@ function ScrollFilm({
       video.removeEventListener("loadedmetadata", scheduleFrame);
       window.removeEventListener("scroll", scheduleFrame);
       window.removeEventListener("resize", scheduleFrame);
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-        video.autoplay = false;
-        video.loop = false;
-        video.pause();
-        return;
-      }
       video.autoplay = true;
       video.loop = true;
       video.addEventListener("playing", onPlaying);
