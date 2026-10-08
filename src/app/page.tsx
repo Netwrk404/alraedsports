@@ -24,6 +24,7 @@ import {
   Search,
   ShoppingBag,
   Sparkles,
+  UserRound,
   X,
 } from "lucide-react";
 
@@ -135,6 +136,7 @@ function ScrollFilm({
   sectionLabel,
   ctaLabel,
   ctaHref,
+  mobileSrc,
   align = "left",
   index,
 }: {
@@ -145,30 +147,23 @@ function ScrollFilm({
   sectionLabel: string;
   ctaLabel: string;
   ctaHref: string;
+  mobileSrc: string;
   align?: "left" | "right";
   index: string;
 }) {
   const sectionRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const frameRef = useRef<number | null>(null);
+  const [playbackError, setPlaybackError] = useState(false);
 
   useEffect(() => {
     const section = sectionRef.current;
     const video = videoRef.current;
     if (!section || !video) return;
 
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const mobile = window.matchMedia("(max-width: 700px)").matches;
-
-    if (mobile) {
-      if (reduceMotion) {
-        video.pause();
-        return;
-      }
-      video.loop = true;
-      video.play().catch(() => undefined);
-      return;
-    }
+    const hasMouseOrTrackpad = window.matchMedia("(any-hover: hover) and (any-pointer: fine)");
+    let scrollDriven: boolean | null = null;
+    let playbackObserver: IntersectionObserver | null = null;
 
     const updateFrame = () => {
       frameRef.current = null;
@@ -183,27 +178,101 @@ function ScrollFilm({
       if (frameRef.current === null) frameRef.current = window.requestAnimationFrame(updateFrame);
     };
     const pausePlayback = () => video.pause();
+    const showPlaybackError = (error: unknown) => {
+      console.error(`Unable to play the ${sectionLabel} video.`, error);
+      setPlaybackError(true);
+    };
+    const onPlaying = () => setPlaybackError(false);
+    const onVideoError = () => showPlaybackError(video.error);
+    const updatePlaybackMode = () => {
+      const useScrollAnimation = hasMouseOrTrackpad.matches;
+      if (scrollDriven === useScrollAnimation) return;
+      scrollDriven = useScrollAnimation;
+      if (frameRef.current !== null) {
+        window.cancelAnimationFrame(frameRef.current);
+        frameRef.current = null;
+      }
 
-    video.pause();
-    video.addEventListener("play", pausePlayback);
-    video.addEventListener("loadedmetadata", scheduleFrame);
-    window.addEventListener("scroll", scheduleFrame, { passive: true });
-    window.addEventListener("resize", scheduleFrame);
-    if (video.readyState >= 1) updateFrame();
+      const source = useScrollAnimation ? src : mobileSrc;
+      const sourceUrl = new URL(source, document.baseURI).href;
+      if (video.src !== sourceUrl) {
+        video.src = source;
+        video.load();
+      }
+
+      if (useScrollAnimation) {
+        playbackObserver?.disconnect();
+        playbackObserver = null;
+        video.removeEventListener("playing", onPlaying);
+        video.removeEventListener("error", onVideoError);
+        video.autoplay = false;
+        video.loop = false;
+        video.pause();
+        video.addEventListener("play", pausePlayback);
+        video.addEventListener("loadedmetadata", scheduleFrame);
+        window.addEventListener("scroll", scheduleFrame, { passive: true });
+        window.addEventListener("resize", scheduleFrame);
+        if (video.readyState >= 1) updateFrame();
+        return;
+      }
+
+      video.removeEventListener("play", pausePlayback);
+      video.removeEventListener("loadedmetadata", scheduleFrame);
+      window.removeEventListener("scroll", scheduleFrame);
+      window.removeEventListener("resize", scheduleFrame);
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        video.autoplay = false;
+        video.loop = false;
+        video.pause();
+        return;
+      }
+      video.autoplay = true;
+      video.loop = true;
+      video.addEventListener("playing", onPlaying);
+      video.addEventListener("error", onVideoError);
+      playbackObserver = new IntersectionObserver(([entry]) => {
+        if (entry.isIntersecting) {
+          video.play().catch((error: unknown) => {
+            showPlaybackError(error);
+          });
+        } else {
+          video.pause();
+        }
+      });
+      playbackObserver.observe(section);
+    };
+
+    updatePlaybackMode();
+    hasMouseOrTrackpad.addEventListener("change", updatePlaybackMode);
 
     return () => {
       if (frameRef.current !== null) window.cancelAnimationFrame(frameRef.current);
+      playbackObserver?.disconnect();
+      hasMouseOrTrackpad.removeEventListener("change", updatePlaybackMode);
+      video.removeEventListener("playing", onPlaying);
+      video.removeEventListener("error", onVideoError);
       video.removeEventListener("play", pausePlayback);
       video.removeEventListener("loadedmetadata", scheduleFrame);
       window.removeEventListener("scroll", scheduleFrame);
       window.removeEventListener("resize", scheduleFrame);
     };
-  }, []);
+  }, [mobileSrc, sectionLabel, src]);
 
+  const retryPlayback = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    setPlaybackError(false);
+    if (video.error) video.load();
+    video.play().catch((error: unknown) => {
+      console.error(`Unable to play the ${sectionLabel} video.`, error);
+      setPlaybackError(true);
+    });
+  };
   return (
     <section ref={sectionRef} className={`ar-scroll-film ${align === "right" ? "is-right" : ""}`} aria-label={sectionLabel}>
       <div className="ar-scroll-film-stage">
-        <video ref={videoRef} className="ar-scroll-film-video" src={src} muted playsInline preload="metadata" aria-label={sectionLabel} />
+        <video ref={videoRef} className="ar-scroll-film-video" src={mobileSrc} autoPlay loop muted playsInline preload="metadata" aria-label={sectionLabel} />
+        {playbackError && <button className="ar-video-retry" type="button" onClick={retryPlayback}>TAP TO PLAY VIDEO <ArrowRight size={15} /></button>}
         <div className="ar-scroll-film-shade" />
         <div className="ar-scroll-film-copy">
           <p className="ar-eyebrow"><span /> {eyebrow}</p>
@@ -470,7 +539,7 @@ export default function Home() {
             {query && <button className="ar-clear-search" type="button" aria-label="Clear search" onClick={() => { setQuery(""); searchRef.current?.focus(); }}><X size={14} /></button>}
             {searchOpen && suggestions.length > 0 && <div className="ar-search-results">{suggestions.map((product) => <button type="button" key={product.id} onClick={() => viewProduct(product)}><span>{product.name}</span><small>{product.brand} · VIEW DETAILS</small></button>)}</div>}
           </form>
-          <Link className="ar-account" href="/account" aria-label="My account"><span>MY ACCOUNT</span><ArrowUpRight size={17} /></Link>
+          <Link className="ar-account" href="/account" aria-label="My account"><span>MY ACCOUNT</span><ArrowUpRight className="ar-account-desktop-icon" size={17} /><UserRound className="ar-account-mobile-icon" size={18} aria-hidden="true" /></Link>
           <button className="ar-bag-button" type="button" onClick={() => setCartOpen(true)} aria-label={`Open shopping bag, ${cartCount} items`}><ShoppingBag size={19} /><span>BAG</span><b>{cartCount}</b></button>
         </div>
       </header>
@@ -513,6 +582,7 @@ export default function Home() {
         sectionLabel="Choose your equipment"
         ctaLabel="FIND YOUR NEXT RACQUET"
         ctaHref="/shop?category=Badminton"
+        mobileSrc="/animation3-mobile.mp4"
         index="01"
       />
 
@@ -535,6 +605,7 @@ export default function Home() {
         sectionLabel="Find your edge"
         ctaLabel="EXPLORE ALL GEAR"
         ctaHref="/shop"
+        mobileSrc="/animation2-mobile.mp4"
         align="right"
         index="02"
       />
