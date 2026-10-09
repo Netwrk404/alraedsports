@@ -56,9 +56,12 @@ create table if not exists products (
   category text check (category in ('Badminton', 'Tennis', 'Squash', 'Accessories')),
   price numeric(10,2) not null,
   image_url text,
+  sku text,
+  zoho_product_id text,
   rating numeric(3,2) default 0,
   reviews integer default 0,
   stock integer default 0,
+  zoho_stock_synced_at timestamptz,
   is_active boolean default true,
   created_at timestamptz default now()
 );
@@ -130,8 +133,9 @@ For an existing database, run these files in the Supabase SQL Editor, in order:
 
 1. `SUPABASE_ACCOUNT_MIGRATION.sql`
 2. `SUPABASE_ORDER_SAFETY_MIGRATION.sql`
+3. `SUPABASE_ZOHO_STOCK_MIGRATION.sql`
 
-The first migration adds saved customer addresses. The second adds server-only database functions that create orders using current Supabase product names/prices and atomically mark paid orders while deducting inventory. Checkout and payment processing will return an error until the second migration has been applied.
+The first migration adds saved customer addresses. The second adds server-only database functions that create orders using current Supabase product names/prices and atomically mark paid orders while deducting inventory. The third adds normalized unique product SKUs and Zoho product IDs, a stock-sync timestamp, and the server-only function used for atomic Zoho stock updates. The Zoho product ID is stored for admin billing/stock management and is not returned by the public product API. Apply this migration before creating or editing products with that field.
 
 Do not use a client-provided price to create orders. The existing `/api/orders` route sends only product IDs and quantities to the database function. The service role key must remain server-only.
 
@@ -159,6 +163,32 @@ Before launch, test these flows against the intended Supabase project:
 The current manual-payment flow sends the order request to WhatsApp, where the customer and store agree on payment and fulfilment. Stock is deducted only when the admin confirms the order as paid. Unpaid orders do not reserve inventory, so check availability before confirming payment if inventory is limited.
 
 The service role key must be configured as a server-only environment variable in the production host. Never prefix it with `NEXT_PUBLIC_` or include it in browser code.
+
+## 10) Mirror Zoho Inventory stock
+
+The website can mirror available stock from Zoho Inventory by matching each product's SKU. This is a one-way stock sync: website orders are not sent to Zoho. The sync adds the available quantities at all configured Zoho locations and updates only products whose SKUs match. Unmatched website products keep their existing stock; API or data errors stop the run before any stock is changed.
+
+1. Apply `SUPABASE_ZOHO_STOCK_MIGRATION.sql` in the Supabase SQL Editor.
+2. Add the exact Zoho item SKU to each website product in Admin. SKUs are trimmed, case-insensitive, and unique in the website catalog. Test products without real Zoho SKUs are deliberately left unmatched.
+3. Create a Zoho OAuth client with Inventory read access, then configure the following server-only environment variables locally and in the production host:
+
+```env
+ZOHO_CLIENT_ID=...
+ZOHO_CLIENT_SECRET=...
+ZOHO_REFRESH_TOKEN=...
+ZOHO_ORGANIZATION_ID=...
+ZOHO_LOCATION_IDS=location_id_1,location_id_2
+ZOHO_ACCOUNTS_URL=https://accounts.zoho.com
+ZOHO_API_URL=https://www.zohoapis.com
+CRON_SECRET=...
+```
+
+Use the OAuth and API domains for the Zoho data center where the account is registered. `ZOHO_API_URL` is a fallback; Zoho's OAuth response API domain takes precedence. `ZOHO_LOCATION_IDS` is a comma-separated list of locations whose available stock should be combined. Never place these credentials in `NEXT_PUBLIC_` variables or share them in chat.
+4. Use **Sync Zoho stock** in the admin dashboard for a manual run. To automate it, configure a scheduler to call `GET https://<your-domain>/api/inventory/zoho-sync` with `Authorization: Bearer <CRON_SECRET>`. The endpoint also supports `POST` for an authenticated admin or scheduler. Choose an interval supported by your hosting plan; no schedule is deployed automatically.
+
+The response reports how many products were updated and which website SKUs did not match Zoho. Successful rows record their last sync time in `zoho_stock_synced_at`; the admin dashboard displays it. A product with a Zoho SKU has its manual stock field disabled because Zoho becomes its stock source. For availability, the integration uses Zoho's per-location `location_available_stock` values. If Zoho omits required location data, returns duplicate matching SKUs, or the sync cannot be saved atomically, the run reports an error and leaves stock unchanged.
+
+Because this is stock-only, confirmed website orders are not written back to Zoho. A later sync will restore the quantity currently shown in Zoho, so Zoho stock must also be updated through your existing process after fulfilling website orders to avoid showing inventory that has already sold.
 
 ## Summary
 

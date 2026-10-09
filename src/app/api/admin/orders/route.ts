@@ -21,7 +21,7 @@ export async function GET(request: Request) {
 
     const { data: orders, error } = await supabase
       .from("orders")
-      .select("id, customer_name, customer_phone, city, address, total, status, notes, created_at, order_items(id, product_name, quantity, unit_price)")
+      .select("id, customer_name, customer_phone, city, address, total, status, notes, created_at, order_items(id, product_id, product_name, quantity, unit_price)")
       .order("created_at", { ascending: false });
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -64,7 +64,7 @@ export async function PATCH(request: Request) {
       }
     }
 
-    const orderSelection = "id, customer_name, customer_phone, city, address, total, status, notes, created_at, order_items(id, product_name, quantity, unit_price)";
+    const orderSelection = "id, customer_name, customer_phone, city, address, total, status, notes, created_at, order_items(id, product_id, product_name, quantity, unit_price)";
     const orderQuery = body.status === "paid"
       ? supabase.from("orders").select(orderSelection).eq("id", body.id)
       : supabase.from("orders").update({

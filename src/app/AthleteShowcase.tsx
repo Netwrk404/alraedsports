@@ -297,7 +297,6 @@ export default function AthleteShowcase({ onBrowse }: { onBrowse?: (category: st
         <aside className="athlete-sidebar">
           <div className="athlete-heading">
             <div>
-              <p className="eyebrow">THE PLAYER EDIT</p>
               <span className="athlete-game-tag">BADMINTON</span>
               <h2 id="athlete-title">Built for<br /><em>every rally.</em></h2>
             </div>

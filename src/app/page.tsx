@@ -23,6 +23,7 @@ import {
   Plus,
   Search,
   ShoppingBag,
+  ShoppingCart,
   Sparkles,
   UserRound,
   X,
@@ -67,7 +68,6 @@ const campaigns = [
     description: "Good gear changes the game. Find the kit that feels like it was made for yours.",
     cta: "SHOP THE COLLECTION",
     image: "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=2200&q=90",
-    label: "BUILT FOR YOUR GAME",
   },
   {
     eyebrow: "MADE TO MOVE",
@@ -75,7 +75,6 @@ const campaigns = [
     description: "Meet the latest court-ready arrivals, selected for players who never stand still.",
     cta: "DISCOVER WHAT'S NEW",
     image: "https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?auto=format&fit=crop&w=2200&q=90",
-    label: "NEW SEASON · NEW ENERGY",
   },
   {
     eyebrow: "YOUR GAME. YOUR RULES.",
@@ -83,7 +82,34 @@ const campaigns = [
     description: "From first serve to match point, get everything you need to make it count.",
     cta: "FIND YOUR SPORT",
     image: "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=2200&q=90",
-    label: "MADE FOR UAE COURTS",
+  },
+  {
+    eyebrow: "OWN EVERY MOMENT",
+    title: <>Find your<br /><em>court rhythm.</em></>,
+    description: "From warm-up to match point, bring confidence to every step of your game.",
+    cta: "EXPLORE COURT GEAR",
+    image: "https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?auto=format&fit=crop&w=2200&q=90",
+  },
+  {
+    eyebrow: "MADE FOR THE NEXT POINT",
+    title: <>Play with<br /><em>purpose.</em></>,
+    description: "Discover the gear that helps you move freely and play your best.",
+    cta: "SHOP BADMINTON",
+    image: "https://images.unsplash.com/photo-1599474924187-334a4aeab4c5?auto=format&fit=crop&w=2200&q=90",
+  },
+  {
+    eyebrow: "BRING YOUR BEST",
+    title: <>Every game<br /><em>starts here.</em></>,
+    description: "Find reliable court essentials selected for players who love the game.",
+    cta: "FIND YOUR GEAR",
+    image: "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?auto=format&fit=crop&w=2200&q=90",
+  },
+  {
+    eyebrow: "YOUR GAME, YOUR WAY",
+    title: <>Make the next<br /><em>rally count.</em></>,
+    description: "Explore player-ready picks for the moments that make you love the game.",
+    cta: "SHOP THE COLLECTION",
+    image: "https://images.unsplash.com/photo-1521412644187-c49fa049e84d?auto=format&fit=crop&w=2200&q=90",
   },
 ];
 
@@ -138,7 +164,6 @@ function ScrollFilm({
   ctaHref,
   mobileSrc,
   align = "left",
-  index,
 }: {
   src: string;
   eyebrow: string;
@@ -149,20 +174,20 @@ function ScrollFilm({
   ctaHref: string;
   mobileSrc: string;
   align?: "left" | "right";
-  index: string;
 }) {
   const sectionRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const frameRef = useRef<number | null>(null);
   const [playbackError, setPlaybackError] = useState(false);
+  const [scrollDriven, setScrollDriven] = useState(false);
 
   useEffect(() => {
     const section = sectionRef.current;
     const video = videoRef.current;
     if (!section || !video) return;
 
-    const hasMouseOrTrackpad = window.matchMedia("(any-hover: hover) and (any-pointer: fine)");
-    let scrollDriven: boolean | null = null;
+    const hasMouseOrTrackpad = window.matchMedia("(hover: hover) and (pointer: fine)");
+    let activeScrollMode: boolean | null = null;
     let playbackObserver: IntersectionObserver | null = null;
 
     const updateFrame = () => {
@@ -187,8 +212,9 @@ function ScrollFilm({
     const onVideoError = () => showPlaybackError(video.error);
     const updatePlaybackMode = () => {
       const useScrollAnimation = hasMouseOrTrackpad.matches;
-      if (scrollDriven === useScrollAnimation) return;
-      scrollDriven = useScrollAnimation;
+      if (activeScrollMode === useScrollAnimation) return;
+      activeScrollMode = useScrollAnimation;
+      setScrollDriven(useScrollAnimation);
       if (frameRef.current !== null) {
         window.cancelAnimationFrame(frameRef.current);
         frameRef.current = null;
@@ -274,9 +300,8 @@ function ScrollFilm({
           <h2>{title}</h2>
           <p>{description}</p>
           <Link className="ar-button ar-button-light" href={ctaHref}>{ctaLabel} <ArrowRight size={16} /></Link>
-          <span className="ar-scroll-film-hint"><span /> SCROLL TO FEEL THE DIFFERENCE</span>
+          <span className="ar-scroll-film-hint"><span /> {scrollDriven ? "SCROLL TO FEEL THE DIFFERENCE" : "VIDEO PLAYS AUTOMATICALLY"}</span>
         </div>
-        <div className="ar-scroll-film-index"><span>{index}</span><i /><span>02</span><small>BUILT FOR THE NEXT POINT</small></div>
       </div>
     </section>
   );
@@ -297,6 +322,7 @@ export default function Home() {
   const [wishlist, setWishlist] = useState<number[]>([]);
   const [wishlistReady, setWishlistReady] = useState(false);
   const [campaignIndex, setCampaignIndex] = useState(0);
+  const [previousCampaignIndex, setPreviousCampaignIndex] = useState<number | null>(null);
   const [justAdded, setJustAdded] = useState<number[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<StoreProduct | null>(null);
   const [announcementIndex, setAnnouncementIndex] = useState(0);
@@ -350,12 +376,19 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (catalogState !== "ready") return;
-    const match = window.matchMedia("(prefers-reduced-motion: reduce)");
-    if (match.matches) return;
-    const timer = window.setInterval(() => setCampaignIndex((index) => (index + 1) % campaigns.length), 6500);
-    return () => window.clearInterval(timer);
-  }, [catalogState]);
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const timer = window.setTimeout(() => {
+      setPreviousCampaignIndex(campaignIndex);
+      setCampaignIndex((campaignIndex + 1) % campaigns.length);
+    }, 8000);
+    return () => window.clearTimeout(timer);
+  }, [campaignIndex]);
+
+  useEffect(() => {
+    if (previousCampaignIndex === null) return;
+    const timer = window.setTimeout(() => setPreviousCampaignIndex(null), 1400);
+    return () => window.clearTimeout(timer);
+  }, [campaignIndex, previousCampaignIndex]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setAnnouncementIndex((index) => (index + 1) % 3), 4500);
@@ -492,6 +525,11 @@ export default function Home() {
   };
 
   const campaign = campaigns[campaignIndex];
+  const showCampaign = (nextIndex: number) => {
+    if (nextIndex === campaignIndex) return;
+    setPreviousCampaignIndex(campaignIndex);
+    setCampaignIndex(nextIndex);
+  };
   const productList = query || activeCategory !== "All" ? filteredProducts : newArrivals;
   const productHeading = query ? "Search results" : activeCategory === "All" ? "Just landed" : `${activeCategory} essentials`;
 
@@ -542,6 +580,7 @@ export default function Home() {
       <div className="ar-subnav" aria-label="Shop links"><span>THE UAE&apos;S HOME FOR RACQUET SPORTS</span><a href="#service">SHOP WITH CONFIDENCE <ArrowUpRight size={12} /></a></div>
 
       <section className="ar-hero" aria-label="Featured campaign">
+        {previousCampaignIndex !== null && <img className="ar-hero-image ar-hero-image-leaving" src={campaigns[previousCampaignIndex].image} alt="" />}
         <img key={campaign.image} className="ar-hero-image" src={campaign.image} alt="" />
         <div className="ar-hero-shade" />
         <div className="ar-hero-copy" key={campaignIndex}>
@@ -550,8 +589,7 @@ export default function Home() {
           <p className="ar-hero-description">{campaign.description}</p>
           <Link className="ar-button ar-button-light" href="/shop">{campaign.cta}<ArrowRight size={16} /></Link>
         </div>
-        <div className="ar-hero-aside"><span>01</span><i /><span>03</span><small>{campaign.label}</small></div>
-        <div className="ar-hero-controls" aria-label="Campaign slides">{campaigns.map((item, index) => <button className={index === campaignIndex ? "is-active" : ""} type="button" key={item.eyebrow} aria-label={`Show campaign ${index + 1}`} aria-pressed={index === campaignIndex} onClick={() => setCampaignIndex(index)} />)}</div>
+        <div className="ar-hero-controls" aria-label="Campaign slides">{campaigns.map((item, index) => <button className={index === campaignIndex ? "is-active" : ""} type="button" key={item.eyebrow} aria-label={`Show campaign ${index + 1} of ${campaigns.length}`} aria-pressed={index === campaignIndex} onClick={() => showCampaign(index)} />)}</div>
         <a className="ar-hero-scroll" href="#service"><ArrowDown size={14} /> SCROLL TO EXPLORE</a>
       </section>
 
@@ -578,7 +616,6 @@ export default function Home() {
         ctaLabel="FIND YOUR NEXT RACQUET"
         ctaHref="/shop?category=Badminton"
         mobileSrc="/animation3-mobile.mp4"
-        index="01"
       />
 
       <AthleteShowcase onBrowse={() => selectCategory("Badminton")} />
@@ -589,7 +626,7 @@ export default function Home() {
           <div className="ar-product-controls"><div className="ar-filter-tabs" aria-label="Filter products by sport">{["All", "Badminton", "Tennis", "Squash", "Accessories"].map((category) => <button className={activeCategory === category ? "is-active" : ""} key={category} type="button" aria-pressed={activeCategory === category} onClick={() => { setActiveCategory(category); setQuery(""); }}>{category}</button>)}</div><div className="ar-rail-buttons"><button type="button" aria-label="Scroll products left" onClick={() => scrollRail("left")}><ChevronLeft size={18} /></button><button type="button" aria-label="Scroll products right" onClick={() => scrollRail("right")}><ChevronRight size={18} /></button></div></div>
         </div>
         {catalogState === "loading" ? <div className="ar-status"><span className="ar-loader" />Finding your next favourite…</div> : catalogState === "error" ? <div className="ar-status ar-status-error" role="alert"><strong>We couldn&apos;t reach the shop right now.</strong><span>{catalogError}</span><button type="button" onClick={() => window.location.reload()}>TRY AGAIN <ArrowRight size={14} /></button></div> : productList.length === 0 ? <div className="ar-status">No products match this search just yet. Try another sport or search term.</div> : <div className="ar-product-rail" ref={railRef}>{productList.map((product) => <ProductTile key={product.id} product={product} liked={wishlist.includes(product.id)} onLike={toggleWishlist} onAdd={addToCart} onView={viewProduct} added={justAdded.includes(product.id)} />)}</div>}
-        <div className="ar-products-foot"><span>MADE FOR THE MATCH. AND EVERYTHING BEFORE IT.</span><span>{productList.length} {productList.length === 1 ? "PICK" : "PICKS"} TO EXPLORE</span></div>
+        <div className="ar-products-foot"><span>MADE FOR THE MATCH. AND EVERYTHING BEFORE IT.</span></div>
       </section>
 
       <ScrollFilm
@@ -602,7 +639,6 @@ export default function Home() {
         ctaHref="/shop"
         mobileSrc="/animation2-mobile.mp4"
         align="right"
-        index="02"
       />
 
       <section className="ar-editorial" id="new-season">
@@ -677,7 +713,7 @@ export default function Home() {
       <div className="ar-floating-actions" aria-label="Quick actions">
         <button className="ar-floating-button ar-floating-top" type="button" aria-label="Scroll to top" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}><ArrowUp size={15} /></button>
         <Link className="ar-floating-button ar-floating-shop" href="/shop" aria-label="Open shop"><ShoppingBag size={15} /></Link>
-        <button className="ar-floating-button ar-floating-cart" type="button" onClick={() => setCartOpen(true)} aria-label={`Open shopping bag, ${cartCount} items`}><ShoppingBag size={15} />{cartCount > 0 && <b>{cartCount}</b>}</button>
+        <button className="ar-floating-button ar-floating-cart" type="button" onClick={() => setCartOpen(true)} aria-label={`Open shopping bag, ${cartCount} items`}><ShoppingCart size={15} />{cartCount > 0 && <b>{cartCount}</b>}</button>
       </div>
 
       <ProductDetailDialog key={selectedProduct?.id ?? "closed"} product={selectedProduct} onClose={() => setSelectedProduct(null)} onAdd={addProductDetailsToCart} />

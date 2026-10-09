@@ -108,7 +108,7 @@ export default function ShopClient({ initialCategory, initialQuery }: { initialC
   const [query, setQuery] = useState(initialQuery);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
-  const [inStockOnly, setInStockOnly] = useState(false);
+  const [showOutOfStock, setShowOutOfStock] = useState(false);
   const [minimumPrice, setMinimumPrice] = useState("");
   const [maximumPrice, setMaximumPrice] = useState("");
   const [sort, setSort] = useState("featured");
@@ -215,7 +215,7 @@ export default function ShopClient({ initialCategory, initialQuery }: { initialC
       const matchesSearch = !normalizedQuery || `${product.name} ${product.brand} ${product.category} ${getProductType(product)}`.toLowerCase().includes(normalizedQuery);
       const matchesType = selectedTypes.length === 0 || selectedTypes.includes(getProductType(product));
       const matchesBrand = selectedBrands.length === 0 || selectedBrands.includes(product.brand || "AL RAED SPORTS");
-      const matchesStock = !inStockOnly || product.stock > 0;
+      const matchesStock = showOutOfStock || product.stock > 0;
       return matchesCategory && matchesSearch && matchesType && matchesBrand && matchesStock && product.price >= minimum && product.price <= maximum;
     });
     if (sort === "price-low") return filtered.sort((a, b) => a.price - b.price);
@@ -223,12 +223,12 @@ export default function ShopClient({ initialCategory, initialQuery }: { initialC
     if (sort === "name") return filtered.sort((a, b) => a.name.localeCompare(b.name));
     if (sort === "stock") return filtered.sort((a, b) => b.stock - a.stock);
     return filtered;
-  }, [products, category, query, selectedTypes, selectedBrands, inStockOnly, minimumPrice, maximumPrice, sort]);
+  }, [products, category, query, selectedTypes, selectedBrands, showOutOfStock, minimumPrice, maximumPrice, sort]);
 
   const cartCount = cart.reduce((sum, line) => sum + line.quantity, 0);
   const cartTotal = cart.reduce((sum, line) => sum + line.product.price * line.quantity, 0);
   const categoryLabel = category === "All" ? "Shop all gear" : `${category} equipment`;
-  const activeFilterCount = selectedTypes.length + selectedBrands.length + (inStockOnly ? 1 : 0) + (minimumPrice !== "" || maximumPrice !== "" ? 1 : 0);
+  const activeFilterCount = selectedTypes.length + selectedBrands.length + (showOutOfStock ? 1 : 0) + (minimumPrice !== "" || maximumPrice !== "" ? 1 : 0);
 
   const persistCart = useCallback((nextCart: CartLine[]) => {
     try {
@@ -280,7 +280,7 @@ export default function ShopClient({ initialCategory, initialQuery }: { initialC
   const clearFilters = () => {
     setSelectedTypes([]);
     setSelectedBrands([]);
-    setInStockOnly(false);
+    setShowOutOfStock(false);
     setMinimumPrice("");
     setMaximumPrice("");
     setQuery("");
@@ -334,7 +334,7 @@ export default function ShopClient({ initialCategory, initialQuery }: { initialC
         <div className={`ar-shop-mobile-filter-backdrop ${filtersOpen ? "is-open" : ""}`} onClick={() => setFiltersOpen(false)} />
         <aside className={`ar-shop-sidebar ${filtersOpen ? "is-open" : ""}`} aria-label="Product filters">
           <div className="ar-shop-sidebar-heading"><div><SlidersHorizontal size={15} /><strong>FILTER & REFINE</strong></div><button type="button" aria-label="Close filters" onClick={() => setFiltersOpen(false)}><X size={18} /></button></div>
-          {(selectedTypes.length > 0 || selectedBrands.length > 0 || inStockOnly || minimumPrice || maximumPrice) && <button className="ar-shop-clear" type="button" onClick={clearFilters}>CLEAR ALL FILTERS <X size={12} /></button>}
+          {(selectedTypes.length > 0 || selectedBrands.length > 0 || showOutOfStock || minimumPrice || maximumPrice) && <button className="ar-shop-clear" type="button" onClick={clearFilters}>CLEAR ALL FILTERS <X size={12} /></button>}
           <details className="ar-shop-filter-group" open>
             <summary>Product type <ChevronDown size={14} /></summary>
             <div className="ar-shop-filter-options">{typeOptions.map(([type, count]) => (
@@ -343,7 +343,7 @@ export default function ShopClient({ initialCategory, initialQuery }: { initialC
           </details>
           <details className="ar-shop-filter-group" open>
             <summary>Availability <ChevronDown size={14} /></summary>
-            <label className="ar-shop-toggle"><input type="checkbox" checked={inStockOnly} onChange={(event) => setInStockOnly(event.target.checked)} /><span>In stock only</span></label>
+            <label className="ar-shop-toggle"><input type="checkbox" checked={showOutOfStock} onChange={(event) => setShowOutOfStock(event.target.checked)} /><span>Show out of stock</span></label>
           </details>
           <details className="ar-shop-filter-group" open>
             <summary>Price <ChevronDown size={14} /></summary>
