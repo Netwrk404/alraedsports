@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import nextEnv from "@next/env";
+import { randomInt } from "node:crypto";
 
 nextEnv.loadEnvConfig(process.cwd());
 
@@ -140,7 +141,7 @@ for (let start = 0; start < products.length; start += 5) {
   const savedBatch = await Promise.all(batch.map(async (product, index) => ({
     ...product,
     category: "Badminton",
-    stock: 0,
+    stock: randomInt(3, 6),
     image_url: await uploadProductImage(product, productImageUrls[start + index]),
     is_active: true,
   })));
@@ -165,14 +166,14 @@ for (const product of savedProducts) {
 
 const { data: verifiedProducts, error: verifyError } = await supabase
   .from("products")
-  .select("name, category, is_active, image_url, description")
+  .select("name, category, is_active, image_url, description, stock")
   .eq("category", "Badminton")
   .in("name", products.map((product) => product.name));
 
 if (verifyError) throw new Error(`Unable to verify badminton products: ${verifyError.message}`);
 if ((verifiedProducts ?? []).length !== products.length
-  || verifiedProducts.some((product) => !product.is_active || !product.image_url || !product.description)) {
-  throw new Error(`Catalog verification failed: expected ${products.length} active products with images and descriptions.`);
+  || verifiedProducts.some((product) => !product.is_active || !product.image_url || !product.description || ![3, 4, 5].includes(product.stock))) {
+  throw new Error(`Catalog verification failed: expected ${products.length} active products with images, descriptions, and stock of 3, 4, or 5.`);
 }
 
 console.log(`Verified ${verifiedProducts.length} Badminton products with descriptions and stored images.`);
