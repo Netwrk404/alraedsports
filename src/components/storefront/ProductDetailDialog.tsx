@@ -26,7 +26,7 @@ function getProductDetails(product: StoreProduct): ProductDetails {
   };
 
   return {
-    description: `${product.name} by ${product.brand || "Al Raed Sports"}. ${categoryDetails[product.category] ?? "A court-ready essential, selected for your next session."}`,
+    description: product.description || `${product.name} by ${product.brand || "Al Raed Sports"}. ${categoryDetails[product.category] ?? "A court-ready essential, selected for your next session."}`,
     specifications: {
       Brand: product.brand || "Al Raed Sports",
       Category: product.category,

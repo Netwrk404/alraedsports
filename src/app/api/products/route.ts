@@ -7,7 +7,7 @@ export async function GET() {
 
   const { data: products, error } = await supabase
     .from("products")
-    .select("id, name, brand, category, price, image_url, rating, reviews, stock")
+    .select("id, name, brand, category, price, image_url, description, rating, reviews, stock")
     .eq("is_active", true)
     .in("category", ["Badminton", "Tennis", "Squash", "Accessories"])
     .order("created_at", { ascending: false });

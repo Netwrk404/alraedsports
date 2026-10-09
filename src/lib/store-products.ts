@@ -5,6 +5,7 @@ export type StoreProduct = {
   category: string;
   price: number;
   image: string;
+  description: string;
   rating: number;
   reviews: number;
   stock: number;
@@ -20,6 +21,7 @@ export function mapStoreProduct(row: Record<string, unknown>): StoreProduct {
     category: String(row.category ?? ""),
     price: Number(row.price ?? 0),
     image: String(row.image_url ?? ""),
+    description: String(row.description ?? ""),
     rating: Number(row.rating ?? 0),
     reviews: Number(row.reviews ?? 0),
     stock: Math.max(0, Number(row.stock ?? 0)),

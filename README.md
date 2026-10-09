@@ -29,6 +29,10 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
+## Badminton catalog
+
+Run `npm run seed:badminton-products` to add the shared list of 20 shoes and 10 accessories to the Badminton category. The script uploads their images to Supabase Storage, saves descriptions, uses listed prices or range midpoints, and starts products with zero stock. Prices are mostly indicative, and suggested models should be verified before sale.
+
 ## Deploy on Vercel
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
