@@ -387,7 +387,7 @@ export default function Home() {
     const timer = window.setTimeout(() => {
       setPreviousCampaignIndex(campaignIndex);
       setCampaignIndex((campaignIndex + 1) % campaigns.length);
-    }, 4000);
+    }, 3000);
     return () => window.clearTimeout(timer);
   }, [campaignIndex]);
 
