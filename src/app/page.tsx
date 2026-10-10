@@ -116,7 +116,7 @@ const campaigns = [
     title: <>Play more.<br /><em>Love every point.</em></>,
     description: "From first serve to match point, find the kit that makes every session feel like yours.",
     cta: "FIND YOUR GEAR",
-    image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=2200&q=90",
+    image: "/product1.jpg",
   },
 ];
 
