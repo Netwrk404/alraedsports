@@ -475,6 +475,7 @@ body { background: #090b0f; color: #f5f7fa; }
 .ar-category-card { aspect-ratio: .83; background: #131922; border: 0; color: #fff; cursor: pointer; overflow: hidden; padding: 0; position: relative; text-align: left; }
 .ar-category-card::after { background: linear-gradient(0deg, rgba(4,8,13,.92), transparent 64%), linear-gradient(180deg, rgba(4,8,13,.28), transparent 33%); content: ""; inset: 0; position: absolute; }
 .ar-category-card img { filter: saturate(.78) contrast(1.03); height: 100%; object-fit: cover; transition: filter .6s, transform .7s cubic-bezier(.2,.8,.2,1); width: 100%; }
+.ar-category-card.is-badminton img { object-position: 70% center; }
 .ar-category-card:hover img { filter: saturate(.94); transform: scale(1.055); }
 .ar-category-index { color: var(--ar-blue); font-family: 'Space Grotesk', sans-serif; font-size: 10px; left: 19px; position: absolute; top: 20px; z-index: 1; }
 .ar-category-copy { bottom: 23px; display: flex; flex-direction: column; gap: 7px; left: 22px; position: absolute; z-index: 1; }

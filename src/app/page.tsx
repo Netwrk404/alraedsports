@@ -70,11 +70,11 @@ const campaigns = [
     image: "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=2200&q=90",
   },
   {
-    eyebrow: "TENNIS · FLASH SALE",
-    title: <>Big serves.<br /><em>Small prices.</em></>,
-    description: "Make your next match count with limited-time savings on selected tennis gear.",
-    cta: "SHOP THE SALE",
-    image: "https://images.unsplash.com/photo-1599474924187-334a4aeab4c5?auto=format&fit=crop&w=2200&q=90",
+    eyebrow: "TENNIS ACCESSORIES & GEAR",
+    title: <>Gear up.<br /><em>Play on.</em></>,
+    description: "From rackets and balls to shoes, bags and accessories, find everything you need for your next match.",
+    cta: "SHOP TENNIS GEAR",
+    image: "/tennis-accessories-poster.jpg",
   },
   {
     eyebrow: "PICKLEBALL · CLEARANCE",
@@ -609,7 +609,7 @@ export default function Home() {
 
       <section className="ar-categories ar-section">
         <div className="ar-section-heading"><div><p className="ar-eyebrow">PICK YOUR PLAY</p><h2>Every game<br />has its <em>gear.</em></h2></div><p className="ar-section-note">Whether it&apos;s your first rally or your thousandth, start with the good stuff.</p></div>
-        <div className="ar-category-grid">{categories.map((category, index) => <button className="ar-category-card" type="button" key={category.name} onClick={() => selectCategory(category.name)}>
+        <div className="ar-category-grid">{categories.map((category, index) => <button className={`ar-category-card${category.name === "Badminton" ? " is-badminton" : ""}`} type="button" key={category.name} onClick={() => selectCategory(category.name)}>
           <img src={category.image} alt="" loading="lazy" /><span className="ar-category-index">0{index + 1}</span><span className="ar-category-copy"><small>{category.note}</small><strong>{category.name}</strong></span><span className="ar-category-arrow"><ArrowUpRight size={18} /></span>
         </button>)}</div>
       </section>
