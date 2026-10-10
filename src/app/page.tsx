@@ -63,53 +63,60 @@ const categories = [
 
 const campaigns = [
   {
-    eyebrow: "THE COURT IS YOURS",
-    title: <>Find your<br /><em>next level.</em></>,
-    description: "Good gear changes the game. Find the kit that feels like it was made for yours.",
-    cta: "SHOP THE COLLECTION",
+    eyebrow: "NEW STOCK ARRIVAL",
+    title: <>Fresh gear.<br /><em>Fresh energy.</em></>,
+    description: "New badminton essentials have landed. Find your next racket, shoes and court-day favourites.",
+    cta: "SHOP NEW ARRIVALS",
     image: "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=2200&q=90",
   },
   {
-    eyebrow: "MADE TO MOVE",
-    title: <>Play with<br /><em>purpose.</em></>,
-    description: "Meet the latest court-ready arrivals, selected for players who never stand still.",
-    cta: "DISCOVER WHAT'S NEW",
-    image: "https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?auto=format&fit=crop&w=2200&q=90",
-  },
-  {
-    eyebrow: "YOUR GAME. YOUR RULES.",
-    title: <>Better days<br /><em>start here.</em></>,
-    description: "From first serve to match point, get everything you need to make it count.",
-    cta: "FIND YOUR SPORT",
-    image: "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=2200&q=90",
-  },
-  {
-    eyebrow: "OWN EVERY MOMENT",
-    title: <>Find your<br /><em>court rhythm.</em></>,
-    description: "From warm-up to match point, bring confidence to every step of your game.",
-    cta: "EXPLORE COURT GEAR",
-    image: "https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?auto=format&fit=crop&w=2200&q=90",
-  },
-  {
-    eyebrow: "MADE FOR THE NEXT POINT",
-    title: <>Play with<br /><em>purpose.</em></>,
-    description: "Discover the gear that helps you move freely and play your best.",
-    cta: "SHOP BADMINTON",
+    eyebrow: "FLASH SALE",
+    title: <>Big match.<br /><em>Small prices.</em></>,
+    description: "Make your next game count with limited-time savings on selected badminton gear.",
+    cta: "SHOP THE SALE",
     image: "https://images.unsplash.com/photo-1599474924187-334a4aeab4c5?auto=format&fit=crop&w=2200&q=90",
   },
   {
-    eyebrow: "BRING YOUR BEST",
-    title: <>Every game<br /><em>starts here.</em></>,
-    description: "Find reliable court essentials selected for players who love the game.",
-    cta: "FIND YOUR GEAR",
+    eyebrow: "CLEARANCE SALE",
+    title: <>Last chance.<br /><em>Best value.</em></>,
+    description: "Shop the final picks from selected court-ready collections before they are gone.",
+    cta: "EXPLORE CLEARANCE",
+    image: "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=2200&q=90",
+  },
+  {
+    eyebrow: "NEW PRODUCT LAUNCH",
+    title: <>Meet your<br /><em>next weapon.</em></>,
+    description: "Take a closer look at the latest racket arrivals and find the feel that fits your game.",
+    cta: "DISCOVER THE DROP",
+    image: "https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?auto=format&fit=crop&w=2200&q=90",
+  },
+  {
+    eyebrow: "BADMINTON, BY THE NUMBERS",
+    title: <>16 feathers.<br /><em>One flight.</em></>,
+    description: "A feather shuttle uses 16 feathers to create the balanced, precise flight players know.",
+    cta: "GET COURT READY",
+    image: "https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?auto=format&fit=crop&w=2200&q=90",
+  },
+  {
+    eyebrow: "PLAYER PLAYBOOK",
+    title: <>Split-step.<br /><em>Stay ready.</em></>,
+    description: "A small hop as your opponent hits can help you react in any direction. Try it in your next rally.",
+    cta: "FIND YOUR COURT GEAR",
     image: "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?auto=format&fit=crop&w=2200&q=90",
   },
   {
-    eyebrow: "YOUR GAME, YOUR WAY",
-    title: <>Make the next<br /><em>rally count.</em></>,
-    description: "Explore player-ready picks for the moments that make you love the game.",
-    cta: "SHOP THE COLLECTION",
+    eyebrow: "COURT CULTURE",
+    title: <>Singles or doubles?<br /><em>Your call.</em></>,
+    description: "Cover every corner solo or build the rally together. Which badminton game is your favourite?",
+    cta: "SHOP BADMINTON",
     image: "https://images.unsplash.com/photo-1521412644187-c49fa049e84d?auto=format&fit=crop&w=2200&q=90",
+  },
+  {
+    eyebrow: "MADE FOR YOUR NEXT RALLY",
+    title: <>Play more.<br /><em>Love every point.</em></>,
+    description: "From first serve to match point, find the kit that makes every session feel like yours.",
+    cta: "FIND YOUR GEAR",
+    image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=2200&q=90",
   },
 ];
 
@@ -380,7 +387,7 @@ export default function Home() {
     const timer = window.setTimeout(() => {
       setPreviousCampaignIndex(campaignIndex);
       setCampaignIndex((campaignIndex + 1) % campaigns.length);
-    }, 8000);
+    }, 4000);
     return () => window.clearTimeout(timer);
   }, [campaignIndex]);
 
