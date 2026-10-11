@@ -51,7 +51,6 @@ export default function ProductDetailDialog({
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [quantity, setQuantity] = useState(1);
   const details = product ? getProductDetails(product) : null;
-  const isDemoProduct = product?.name.startsWith("[TEST]") ?? false;
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -79,7 +78,6 @@ export default function ProductDetailDialog({
           <div className="ar-product-detail-visual">
             {product.image ? <img src={product.image} alt={product.name} /> : <span className="ar-product-placeholder">AL RAED<br />SPORTS</span>}
             <span className="ar-product-detail-category">{product.category}</span>
-            {isDemoProduct && <span className="ar-product-demo-badge">TEST PRODUCT</span>}
           </div>
           <section className="ar-product-detail-content">
             <button className="ar-product-detail-close" type="button" aria-label="Close product details" onClick={() => dialogRef.current?.close()}><X size={20} /></button>
@@ -96,7 +94,6 @@ export default function ProductDetailDialog({
                 <div className="ar-product-spec-row" key={label}><span>{label}</span><strong>{value}</strong></div>
               ))}
             </div>
-            {isDemoProduct && <p className="ar-product-demo-note">This is a test listing. Specifications are illustrative demo content, not manufacturer-verified product data.</p>}
             <div className="ar-product-detail-buy">
               <div className="ar-detail-quantity" aria-label="Choose quantity">
                 <button type="button" aria-label="Decrease quantity" onClick={() => setQuantity((value) => Math.max(1, value - 1))} disabled={quantity <= 1}><Minus size={15} /></button>

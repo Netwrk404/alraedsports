@@ -74,20 +74,23 @@ const campaigns = [
     title: <>Gear up.<br /><em>Play on.</em></>,
     description: "From rackets and balls to shoes, bags and accessories, find everything you need for your next match.",
     cta: "SHOP TENNIS GEAR",
+    href: "/shop?category=Tennis",
     image: "/tennis-accessories-poster.jpg",
   },
   {
-    eyebrow: "PICKLEBALL · CLEARANCE",
-    title: <>Last chance.<br /><em>Best value.</em></>,
-    description: "Shop the final picks on paddles, balls and court essentials before they are gone.",
-    cta: "EXPLORE CLEARANCE",
-    image: "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=2200&q=90",
+    eyebrow: "PICKLEBALL · COURT ESSENTIALS",
+    title: <>Pick your paddle.<br /><em>Own the court.</em></>,
+    description: "Shop pickleball paddles, balls and court essentials for your next game.",
+    cta: "SHOP PICKLEBALL",
+    href: "/shop?category=Pickleball",
+    image: "/pickleball-campaign.jpg",
   },
   {
-    eyebrow: "BADMINTON · NEW RACKET LAUNCH",
-    title: <>Meet your<br /><em>next weapon.</em></>,
-    description: "Take a closer look at the latest racket arrivals and find the feel that fits your game.",
-    cta: "DISCOVER THE DROP",
+    eyebrow: "TENNIS · RACQUET COLLECTION",
+    title: <>Find your<br /><em>winning edge.</em></>,
+    description: "Explore tennis racquets and court essentials made for confident serves, sharp returns and every rally.",
+    cta: "SHOP TENNIS EQUIPMENT",
+    href: "/shop?category=Tennis",
     image: "https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?auto=format&fit=crop&w=2200&q=90",
   },
   {
@@ -102,13 +105,15 @@ const campaigns = [
     title: <>Split-step.<br /><em>Stay ready.</em></>,
     description: "Time a small split-step as your opponent hits to be ready to move in any direction.",
     cta: "EXPLORE TENNIS GEAR",
+    href: "/shop?category=Tennis",
     image: "https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?auto=format&fit=crop&w=2200&q=90",
   },
   {
-    eyebrow: "PICKLEBALL · COURT CULTURE",
-    title: <>Kitchen line.<br /><em>Quick hands.</em></>,
-    description: "The non-volley zone is pickleball's famous kitchen. Master the soft game and own the rally.",
-    cta: "EXPLORE PICKLEBALL",
+    eyebrow: "TENNIS · COURT STRATEGY",
+    title: <>Own the baseline.<br /><em>Rule the rally.</em></>,
+    description: "Build your point from the baseline, move your opponent and step in when the moment is right.",
+    cta: "EXPLORE TENNIS GEAR",
+    href: "/shop?category=Tennis",
     image: "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=2200&q=90",
   },
   {
@@ -118,10 +123,33 @@ const campaigns = [
     cta: "FIND YOUR GEAR",
     image: "/product1.jpg",
   },
+  {
+    eyebrow: "YONEX · TENNIS SHOES",
+    title: <>Move with<br /><em>confidence.</em></>,
+    description: "Responsive court shoes made to support every split-step, sprint and change of direction.",
+    cta: "SHOP TENNIS SHOES",
+    href: "/shop?category=Tennis",
+    image: "/yonex%20banner.jpg",
+    layout: "poster-wide",
+  },
+  {
+    eyebrow: "YONEX · COURT SHOES",
+    title: <>Own every<br /><em>step.</em></>,
+    description: "Find a secure, comfortable fit for quick footwork and long rallies on court.",
+    cta: "EXPLORE COURT SHOES",
+    href: "/shop?category=Tennis",
+    image: "/yonex%20banner%202.jpg",
+    layout: "poster-portrait",
+  },
 ];
 
 const money = (amount: number) =>
   new Intl.NumberFormat("en-AE", { style: "currency", currency: "AED", maximumFractionDigits: 0 }).format(amount);
+
+const configuredWhatsAppNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.replace(/\D/g, "");
+const footerWhatsAppUrl = configuredWhatsAppNumber
+  ? `https://wa.me/${configuredWhatsAppNumber.startsWith("00") ? configuredWhatsAppNumber.slice(2) : configuredWhatsAppNumber.startsWith("0") ? `971${configuredWhatsAppNumber.slice(1)}` : configuredWhatsAppNumber}`
+  : "https://wa.me/?text=Hello%20Al%20Raed%20Sports";
 
 function ProductTile({
   product,
@@ -329,7 +357,6 @@ export default function Home() {
   const [wishlist, setWishlist] = useState<number[]>([]);
   const [wishlistReady, setWishlistReady] = useState(false);
   const [campaignIndex, setCampaignIndex] = useState(0);
-  const [previousCampaignIndex, setPreviousCampaignIndex] = useState<number | null>(null);
   const [justAdded, setJustAdded] = useState<number[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<StoreProduct | null>(null);
   const [announcementIndex, setAnnouncementIndex] = useState(0);
@@ -383,19 +410,11 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const timer = window.setTimeout(() => {
-      setPreviousCampaignIndex(campaignIndex);
-      setCampaignIndex((campaignIndex + 1) % campaigns.length);
+    const timer = window.setInterval(() => {
+      setCampaignIndex((index) => (index + 1) % campaigns.length);
     }, 3000);
-    return () => window.clearTimeout(timer);
-  }, [campaignIndex]);
-
-  useEffect(() => {
-    if (previousCampaignIndex === null) return;
-    const timer = window.setTimeout(() => setPreviousCampaignIndex(null), 1400);
-    return () => window.clearTimeout(timer);
-  }, [campaignIndex, previousCampaignIndex]);
+    return () => window.clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const timer = window.setInterval(() => setAnnouncementIndex((index) => (index + 1) % 3), 4500);
@@ -534,7 +553,6 @@ export default function Home() {
   const campaign = campaigns[campaignIndex];
   const showCampaign = (nextIndex: number) => {
     if (nextIndex === campaignIndex) return;
-    setPreviousCampaignIndex(campaignIndex);
     setCampaignIndex(nextIndex);
   };
   const productList = query || activeCategory !== "All" ? filteredProducts : newArrivals;
@@ -586,15 +604,14 @@ export default function Home() {
 
       <div className="ar-subnav" aria-label="Shop links"><span>THE UAE&apos;S HOME FOR RACQUET SPORTS</span><a href="#service">SHOP WITH CONFIDENCE <ArrowUpRight size={12} /></a></div>
 
-      <section className="ar-hero" aria-label="Featured campaign">
-        {previousCampaignIndex !== null && <img className="ar-hero-image ar-hero-image-leaving" src={campaigns[previousCampaignIndex].image} alt="" />}
-        <img key={campaign.image} className="ar-hero-image" src={campaign.image} alt="" />
+      <section className="ar-hero" data-campaign-layout={campaign.layout ?? "standard"} aria-label="Featured campaign">
+        <img key={campaign.image} className={`ar-hero-image${campaign.layout ? ` ar-hero-image-${campaign.layout}` : ""}`} src={campaign.image} alt="" />
         <div className="ar-hero-shade" />
         <div className="ar-hero-copy" key={campaignIndex}>
           <p className="ar-eyebrow"><span /> {campaign.eyebrow}</p>
           <h1>{campaign.title}</h1>
           <p className="ar-hero-description">{campaign.description}</p>
-          <Link className="ar-button ar-button-light" href="/shop">{campaign.cta}<ArrowRight size={16} /></Link>
+          <Link className="ar-button ar-button-light" href={campaign.href ?? "/shop"}>{campaign.cta}<ArrowRight size={16} /></Link>
         </div>
         <div className="ar-hero-controls" aria-label="Campaign slides">{campaigns.map((item, index) => <button className={index === campaignIndex ? "is-active" : ""} type="button" key={item.eyebrow} aria-label={`Show campaign ${index + 1} of ${campaigns.length}`} aria-pressed={index === campaignIndex} onClick={() => showCampaign(index)} />)}</div>
         <a className="ar-hero-scroll" href="#service"><ArrowDown size={14} /> SCROLL TO EXPLORE</a>
@@ -684,11 +701,20 @@ export default function Home() {
           <Link className="ar-text-link" href="/shop">ALL BRANDS <ArrowRight size={16} /></Link>
         </div>
         <div className="ar-brand-list" aria-label="Featured brands">
-          {["YONEX", "WILSON", "HEAD", "BABOLAT", "VICTOR"].map((brand) => <Link key={brand} href={`/shop?q=${encodeURIComponent(brand)}`}>{brand}</Link>)}
+          <div className="ar-brand-list-track">
+            <div className="ar-brand-list-group">
+              {["YONEX", "LI-NING", "VICTOR", "APACS", "WILSON", "HEAD", "ADIDAS"].map((brand) => <Link key={brand} href={`/shop?q=${encodeURIComponent(brand)}`}>{brand}</Link>)}
+            </div>
+            <div className="ar-brand-list-group" aria-hidden="true">
+              {["YONEX", "LI-NING", "VICTOR", "APACS", "WILSON", "HEAD", "ADIDAS"].map((brand) => <span key={brand}>{brand}</span>)}
+            </div>
+          </div>
         </div>
-        <div className="ar-brand-marquee" aria-label="Racquets, court shoes, strings and grips, player apparel">
+        <div className="ar-brand-marquee" aria-label="Racquets, court shoes, strings and grips, player apparel, pickleball paddles, pickleballs, court bags, training essentials">
           <div className="ar-brand-marquee-track">
-            {["RACQUETS", "COURT SHOES", "STRINGS & GRIPS", "PLAYER APPAREL", "RACQUETS", "COURT SHOES", "STRINGS & GRIPS", "PLAYER APPAREL"].map((item, index) => <span key={`${item}-${index}`}>{item}<i>✦</i></span>)}
+            {[0, 1].map((copy) => <div className="ar-brand-marquee-group" aria-hidden={copy === 1} key={copy}>
+              {["RACQUETS", "COURT SHOES", "STRINGS & GRIPS", "PLAYER APPAREL", "PICKLEBALL PADDLES", "PICKLEBALLS", "COURT BAGS", "TRAINING ESSENTIALS"].map((item) => <span key={item}>{item}<i>✦</i></span>)}
+            </div>)}
           </div>
         </div>
       </section>
@@ -697,6 +723,18 @@ export default function Home() {
         <div className="ar-footer-brand">
           <Link className="ar-wordmark ar-footer-logo" href="/" aria-label="Al Raed Sports home"><img className="ar-brand-logo" src="/IMG_8477.jpg%2010-33-16-710.jpg" alt="" /><span>AL RAED<small>SPORTS</small></span></Link>
           <p>Premium sports equipment<br /><span>for the UAE in motion.</span></p>
+          <nav className="ar-footer-socials" aria-label="Connect with Al Raed Sports">
+            <a href="https://www.facebook.com/alraedsports/" target="_blank" rel="noreferrer" aria-label="Visit Al Raed Sports on Facebook">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 21v-8h2.7l.4-3.1h-3.1v-2c0-.9.3-1.6 1.6-1.6h1.7V3.5c-.3 0-1.4-.1-2.6-.1-2.6 0-4.4 1.6-4.4 4.5v2H7v3.1h2.8v8h3.7Z" fill="currentColor" /></svg>
+            </a>
+            <a href="https://www.instagram.com/al_raed_sports/?hl=en" target="_blank" rel="noreferrer" aria-label="Visit Al Raed Sports on Instagram">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5" fill="none" stroke="currentColor" strokeWidth="1.8" /><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" strokeWidth="1.8" /><circle cx="17.6" cy="6.7" r="1.1" fill="currentColor" /></svg>
+            </a>
+            <a className="ar-footer-whatsapp" href={footerWhatsAppUrl} target="_blank" rel="noreferrer" aria-label="Reach Al Raed Sports on WhatsApp">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 11.7a8.2 8.2 0 0 1-12.1 7.2L3 20l1.2-5a8.2 8.2 0 1 1 16-3.3Z" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" /><path d="M8.4 8.2c.2-.5.5-.5.8-.5h.5c.2 0 .4.1.5.4l.7 1.6c.1.2.1.4-.1.6l-.5.6c-.2.2-.2.4 0 .7.7 1.1 1.5 1.8 2.7 2.4.3.1.5.1.7-.1l.7-.8c.2-.2.4-.3.7-.2l1.6.8c.3.1.4.3.4.5 0 .4-.2 1.2-.7 1.6-.5.4-1.1.6-1.8.5-1-.2-2.2-.6-3.8-1.7-1.3-.9-2.2-2-2.8-3.2-.6-1.2-.6-2.1-.4-2.7.2-.3.5-.7.8-.9Z" fill="currentColor" /></svg>
+              <span>WHATSAPP</span>
+            </a>
+          </nav>
         </div>
         <nav className="ar-footer-column" aria-label="Shop links">
           <h3>SHOP</h3><Link href="/shop">All products</Link><Link href="/shop?category=Badminton">Badminton</Link><Link href="/shop?category=Tennis">Tennis</Link><Link href="/shop?category=Squash">Squash</Link>

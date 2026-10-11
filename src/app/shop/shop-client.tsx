@@ -21,7 +21,7 @@ import {
 import ProductDetailDialog from "@/components/storefront/ProductDetailDialog";
 import { mapStoreProduct, type CartLine, type StoreProduct } from "@/lib/store-products";
 
-const categories = ["All", "Badminton", "Tennis", "Squash", "Accessories"];
+const categories = ["All", "Badminton", "Tennis", "Squash", "Pickleball", "Accessories"];
 const cartKey = "alraed-storefront-cart";
 
 const money = (amount: number) =>
@@ -82,7 +82,6 @@ function ShopProductCard({
         <button type="button" className="ar-shop-product-open" onClick={() => onView(product)} aria-label={`View ${product.name} details`}>
           {product.image ? <img src={product.image} alt={product.name} loading="lazy" /> : <span className="ar-product-placeholder">AL RAED<br />SPORTS</span>}
         </button>
-        {product.name.startsWith("[TEST]") && <span className="ar-shop-demo-label">TEST PICK</span>}
         {product.stock > 0 && product.stock < 4 && <span className="ar-shop-stock-badge">ONLY {product.stock} LEFT</span>}
         <button className={`ar-shop-wishlist ${liked ? "is-liked" : ""}`} type="button" onClick={() => onLike(product.id)} aria-label={`${liked ? "Remove" : "Add"} ${product.name} ${liked ? "from" : "to"} wishlist`}>
           <Heart size={17} fill={liked ? "currentColor" : "none"} />
@@ -314,7 +313,7 @@ export default function ShopClient({ initialCategory, initialQuery }: { initialC
         <div className="ar-shop-header-actions">
           <Link className="ar-shop-home-link" href="/"><ArrowLeft size={14} /><span>HOME</span></Link>
           <button className="ar-bag-button" type="button" onClick={() => setCartOpen(true)} aria-label={`Open shopping bag, ${cartCount} items`}>
-            <ShoppingBag size={19} /><span>BAG</span><i>{cartCount}</i>
+            <ShoppingBag size={19} /><span>BAG</span><span className="ar-bag-count">{cartCount}</span>
           </button>
         </div>
       </header>

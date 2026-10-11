@@ -10,7 +10,7 @@ export default async function ShopPage({ searchParams }: PageProps<"/shop">) {
   const params = await searchParams;
   const requestedCategory = Array.isArray(params.category) ? params.category[0] : params.category;
   const requestedQuery = Array.isArray(params.q) ? params.q[0] : params.q;
-  const initialCategory = ["Badminton", "Tennis", "Squash", "Accessories"].includes(requestedCategory ?? "")
+  const initialCategory = ["Badminton", "Tennis", "Squash", "Pickleball", "Accessories"].includes(requestedCategory ?? "")
     ? requestedCategory ?? "All"
     : "All";
 
