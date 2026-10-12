@@ -21,9 +21,12 @@ export async function GET(request: Request) {
 
     const { data: orders, error } = await supabase
       .from("orders")
-      .select("id, customer_name, customer_phone, city, address, total, status, notes, created_at, order_items(id, product_id, product_name, quantity, unit_price)")
+      .select("id, customer_name, customer_phone, city, address, total, status, notes, created_at, stripe_payment_intent_id, stripe_payment_method, stripe_paid_at, order_items(id, product_id, product_name, quantity, unit_price)")
       .order("created_at", { ascending: false });
 
+    if (error?.code === "42703") {
+      return NextResponse.json({ error: "Run SUPABASE_STRIPE_CHECKOUT_MIGRATION.sql in Supabase to enable payment details." }, { status: 503 });
+    }
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ orders: orders ?? [] });
   } catch (error) {
@@ -46,6 +49,27 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Invalid order status." }, { status: 400 });
     }
 
+    if (body.status) {
+      const { data: currentOrder, error: currentOrderError } = await supabase
+        .from("orders")
+        .select("status, stripe_checkout_session_id, stripe_stock_reserved, stripe_payment_intent_id, stripe_paid_at")
+        .eq("id", body.id)
+        .single();
+      if (currentOrderError) return NextResponse.json({ error: "Unable to verify the order status." }, { status: 500 });
+      if (currentOrder?.stripe_stock_reserved && body.status !== "awaiting_payment") {
+        return NextResponse.json({ error: "This Stripe checkout is still awaiting payment. Use the customer checkout cancellation or wait for Stripe's signed webhook before changing its status." }, { status: 409 });
+      }
+      if ((currentOrder?.stripe_payment_intent_id || currentOrder?.stripe_paid_at) && ["awaiting_payment", "cancelled"].includes(body.status)) {
+        return NextResponse.json({ error: "A confirmed Stripe payment cannot be reopened or cancelled without first processing a refund." }, { status: 409 });
+      }
+      if (currentOrder?.stripe_checkout_session_id && currentOrder.status === "cancelled" && body.status !== "cancelled") {
+        return NextResponse.json({ error: "A cancelled Stripe checkout cannot be reopened. Ask the customer to start a new checkout." }, { status: 409 });
+      }
+      if (body.status === "paid" && currentOrder?.stripe_checkout_session_id && currentOrder.status !== "paid") {
+        return NextResponse.json({ error: "Stripe payments are confirmed by the signed payment webhook; do not mark this checkout manually." }, { status: 409 });
+      }
+    }
+
     if (body.status === "paid") {
       const { error: paymentError } = await supabase.rpc("mark_order_paid_and_deduct_inventory", {
         p_order_id: body.id,
@@ -64,7 +88,7 @@ export async function PATCH(request: Request) {
       }
     }
 
-    const orderSelection = "id, customer_name, customer_phone, city, address, total, status, notes, created_at, order_items(id, product_id, product_name, quantity, unit_price)";
+    const orderSelection = "id, customer_name, customer_phone, city, address, total, status, notes, created_at, stripe_payment_intent_id, stripe_payment_method, stripe_paid_at, order_items(id, product_id, product_name, quantity, unit_price)";
     const orderQuery = body.status === "paid"
       ? supabase.from("orders").select(orderSelection).eq("id", body.id)
       : supabase.from("orders").update({

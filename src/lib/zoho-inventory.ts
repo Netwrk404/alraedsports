@@ -1,3 +1,5 @@
+import { get } from "http";
+
 type ZohoApiResponse<T> = {
   code?: number;
   message?: string;
@@ -209,7 +211,6 @@ const getItemDetails = async (
 
   return detailedItems;
 };
-
 export const getZohoStockUpdates = async (websiteSkus: string[]): Promise<ZohoStockUpdate[]> => {
   const credentials = getCredentials();
   const { accessToken, apiUrl } = await getAccessToken(credentials);

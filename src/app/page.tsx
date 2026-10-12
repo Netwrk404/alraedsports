@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import AthleteShowcase from "./AthleteShowcase";
 import ProductDetailDialog from "@/components/storefront/ProductDetailDialog";
 import { mapStoreProduct, type CartLine, type StoreProduct } from "@/lib/store-products";
+import { startStripeCheckout } from "@/lib/start-checkout";
 import {
   ArrowDown,
   ArrowLeft,
@@ -144,7 +145,7 @@ const campaigns = [
 ];
 
 const money = (amount: number) =>
-  new Intl.NumberFormat("en-AE", { style: "currency", currency: "AED", maximumFractionDigits: 0 }).format(amount);
+  new Intl.NumberFormat("en-AE", { style: "currency", currency: "AED", maximumFractionDigits: 2 }).format(amount);
 
 const configuredWhatsAppNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.replace(/\D/g, "");
 const footerWhatsAppUrl = configuredWhatsAppNumber
@@ -353,6 +354,8 @@ export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [cart, setCart] = useState<CartLine[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
+  const [checkoutBusy, setCheckoutBusy] = useState(false);
+  const [checkoutError, setCheckoutError] = useState("");
   const [cartReady, setCartReady] = useState(false);
   const [wishlist, setWishlist] = useState<number[]>([]);
   const [wishlistReady, setWishlistReady] = useState(false);
@@ -543,11 +546,15 @@ export default function Home() {
     );
   };
 
-  const handleWhatsAppCheckout = () => {
-    const lines = cart.map(({ product, quantity }) => `• ${product.name} × ${quantity} — ${money(product.price * quantity)}`).join("\n");
-    const message = encodeURIComponent(`Hello Al Raed Sports, I'd like to place an order:\n\n${lines}\n\nTotal: ${money(cartTotal)}`);
-    const configuredNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.replace(/\D/g, "");
-    window.open(configuredNumber ? `https://wa.me/${configuredNumber}?text=${message}` : `https://wa.me/?text=${message}`, "_blank", "noopener,noreferrer");
+  const handleStripeCheckout = async () => {
+    setCheckoutBusy(true);
+    setCheckoutError("");
+    try {
+      await startStripeCheckout(cart);
+    } catch (error) {
+      setCheckoutError(error instanceof Error ? error.message : "Unable to start secure checkout.");
+      setCheckoutBusy(false);
+    }
   };
 
   const campaign = campaigns[campaignIndex];
@@ -766,9 +773,10 @@ export default function Home() {
       {cartOpen && <div className="ar-drawer-backdrop" onClick={() => setCartOpen(false)}>
         <aside className="ar-cart-drawer" role="dialog" aria-modal="true" aria-labelledby="ar-cart-title" onClick={(event) => event.stopPropagation()}>
           <div className="ar-cart-heading"><div><p className="ar-eyebrow">YOUR GAME, GATHERED</p><h2 id="ar-cart-title">Your bag <span>({cartCount})</span></h2></div><button type="button" aria-label="Close bag" onClick={() => setCartOpen(false)}><X /></button></div>
+          {checkoutError && <p className="ar-shop-cart-error" role="alert">{checkoutError} <Link href="/account">My account</Link></p>}
           {cart.length === 0 ? <div className="ar-empty-cart"><ShoppingBag size={30} /><strong>A little room for something good.</strong><p>Your bag is waiting for its first match-ready pick.</p><Link className="ar-button ar-button-light" href="/shop" onClick={() => setCartOpen(false)}>FIND YOUR GEAR <ArrowRight size={15} /></Link></div> : <>
             <div className="ar-cart-items">{cart.map(({ product, quantity }) => <article className="ar-cart-line" key={product.id}><div className="ar-cart-image">{product.image && <img src={product.image} alt="" />}</div><div className="ar-cart-line-copy"><small>{product.brand}</small><strong>{product.name}</strong><span>{money(product.price)}</span><div className="ar-quantity"><button type="button" aria-label={`Remove one ${product.name}`} onClick={() => changeQuantity(product.id, -1)}><Minus size={13} /></button><span>{quantity}</span><button type="button" aria-label={`Add one ${product.name}`} onClick={() => changeQuantity(product.id, 1)} disabled={quantity >= Math.min(product.stock, 50)}><Plus size={13} /></button></div></div><button className="ar-remove-line" type="button" aria-label={`Remove ${product.name}`} onClick={() => setCart((items) => items.filter((line) => line.product.id !== product.id))}><X size={16} /></button></article>)}</div>
-            <div className="ar-cart-bottom"><div><span>SUBTOTAL</span><strong>{money(cartTotal)}</strong></div><small>Delivery and any applicable fees are confirmed when your order is placed.</small><button className="ar-button ar-button-light ar-checkout" type="button" onClick={handleWhatsAppCheckout}>CONTINUE ON WHATSAPP <ArrowRight size={16} /></button></div>
+            <div className="ar-cart-bottom"><div><span>SUBTOTAL</span><strong>{money(cartTotal)}</strong></div><small>Secure card checkout. Apple Pay appears automatically on supported devices.</small><button className="ar-button ar-button-light ar-checkout" type="button" onClick={() => void handleStripeCheckout()} disabled={checkoutBusy}>{checkoutBusy ? "OPENING SECURE CHECKOUT..." : "PROCEED TO PAYMENT"} <ArrowRight size={16} /></button></div>
           </>}
         </aside>
       </div>}

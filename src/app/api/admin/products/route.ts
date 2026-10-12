@@ -146,7 +146,19 @@ export async function PUT(request: Request) {
     if (body.stock !== undefined) {
       const stock = Number(body.stock);
       if (!Number.isInteger(stock) || stock < 0) return NextResponse.json({ error: "Enter a valid stock quantity." }, { status: 400 });
-      updatePayload.stock = stock;
+      const { error: stockError } = await supabase.rpc("set_product_stock_with_reservations", {
+        p_product_id: body.id,
+        p_stock: stock,
+      });
+      if (stockError?.code === "42883" || stockError?.code === "42P01") {
+        return NextResponse.json({ error: "Run SUPABASE_STRIPE_CHECKOUT_MIGRATION.sql before updating checkout inventory." }, { status: 503 });
+      }
+      if (stockError?.message.includes("STOCK_BELOW_CHECKOUT_RESERVATIONS:")) {
+        const reservedStock = stockError.message.split(":").at(-1);
+        return NextResponse.json({ error: `This product has ${reservedStock} item(s) reserved in open checkouts. Enter at least ${reservedStock} in stock.` }, { status: 409 });
+      }
+      if (stockError?.message.includes("PRODUCT_NOT_FOUND")) return NextResponse.json({ error: "Product not found." }, { status: 404 });
+      if (stockError) return NextResponse.json({ error: "Unable to safely update product stock." }, { status: 500 });
     }
     if (body.sku !== undefined) {
       if (body.sku !== null && typeof body.sku !== "string") {
@@ -166,12 +178,10 @@ export async function PUT(request: Request) {
     if (body.image_url !== undefined) updatePayload.image_url = body.image_url.trim();
     if (body.is_active !== undefined) updatePayload.is_active = body.is_active;
 
-    const { data, error } = await supabase
-      .from("products")
-      .update(updatePayload)
-      .eq("id", body.id)
-      .select()
-      .single();
+    const productQuery = Object.keys(updatePayload).length
+      ? supabase.from("products").update(updatePayload).eq("id", body.id).select().single()
+      : supabase.from("products").select().eq("id", body.id).single();
+    const { data, error } = await productQuery;
 
     if (error) return databaseErrorResponse(error);
     return NextResponse.json({ product: data });

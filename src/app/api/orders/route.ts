@@ -18,10 +18,13 @@ export async function GET(request: Request) {
 
     const { data: orders, error } = await supabase
       .from("orders")
-      .select("id, customer_name, customer_phone, city, address, total, status, created_at, order_items(id, product_name, quantity, unit_price)")
+      .select("id, customer_name, customer_phone, city, address, total, status, created_at, stripe_payment_intent_id, stripe_payment_method, stripe_paid_at, order_items(id, product_name, quantity, unit_price)")
       .eq("user_id", profile.id)
       .order("created_at", { ascending: false });
 
+    if (error?.code === "42703") {
+      return NextResponse.json({ error: "Run SUPABASE_STRIPE_CHECKOUT_MIGRATION.sql in Supabase to enable payment details." }, { status: 503 });
+    }
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ orders: orders ?? [] });
   } catch {

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Check, Clock3, LogOut, MapPin, PackageCheck, Plus, Save, ShieldCheck, ShoppingBag, UserRound } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Clock3, LogOut, MapPin, PackageCheck, Plus, Save, ShieldCheck, UserRound } from "lucide-react";
 import type { User } from "firebase/auth";
 import { firebaseEnabled, logoutFirebase, signInWithGoogle, subscribeToAuth } from "@/lib/firebase";
 import { isAdminEmail } from "@/lib/admin";
@@ -31,6 +31,9 @@ type Order = {
   city: string | null;
   address: string | null;
   created_at: string;
+  stripe_payment_intent_id: string | null;
+  stripe_payment_method: string | null;
+  stripe_paid_at: string | null;
   order_items: OrderItem[];
 };
 
@@ -285,15 +288,16 @@ export default function AccountPage() {
             </section>
 
             <section className="account-panel orders-panel">
-              <div className="account-panel-heading"><div><p className="account-kicker">03 / YOUR ACTIVITY</p><h2>Order history</h2></div><ShoppingBag size={18} /></div>
+              <div className="account-panel-heading"><div><p className="account-kicker">03 / YOUR ACTIVITY</p><h2>Order history</h2></div><Link className="account-orders-link" href="/account/orders">MY ORDERS <ArrowRight size={13} /></Link></div>
               {orders.length ? <div className="order-list">{orders.map((order) => (
                 <article className="order-card" key={order.id}>
                   <div className="order-card-heading"><div><span>ORDER</span><strong>#{order.id.slice(0, 8).toUpperCase()}</strong></div><span className={`order-status status-${order.status.toLowerCase()}`}><Clock3 size={12} />{formatOrderStatus(order.status)}</span></div>
                   <div className="order-items">{order.order_items?.map((item) => <div key={item.id}><span>{item.product_name} <small>× {item.quantity}</small></span><strong>AED {(Number(item.unit_price) * item.quantity).toLocaleString()}</strong></div>)}</div>
                   <div className="order-delivery"><MapPin size={13} /><span>{order.city} · {order.address}</span></div>
                   <div className="order-card-footer"><time>{new Date(order.created_at).toLocaleDateString("en-AE", { day: "numeric", month: "short", year: "numeric" })}</time><strong>AED {Number(order.total).toLocaleString()}</strong></div>
+                  {(order.status === "paid" || order.stripe_payment_intent_id || order.stripe_paid_at) && <div className="order-payment-summary"><strong>Payment confirmed</strong><span>{order.stripe_payment_method || "Payment confirmed"}</span>{order.stripe_paid_at && <time>{new Date(order.stripe_paid_at).toLocaleDateString("en-AE")}</time>}</div>}
                 </article>
-              ))}</div> : <div className="orders-empty"><PackageCheck size={23} /><strong>No orders yet</strong><p>Your confirmed WhatsApp orders will appear here.</p><Link href="/#shop">Explore the collection <ArrowRight size={14} /></Link></div>}
+              ))}</div> : <div className="orders-empty"><PackageCheck size={23} /><strong>No orders yet</strong><p>Your orders and payment confirmations will appear here.</p><Link href="/shop">Explore the collection <ArrowRight size={14} /></Link></div>}
             </section>
           </div>
 

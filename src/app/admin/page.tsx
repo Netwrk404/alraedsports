@@ -33,6 +33,9 @@ type Order = {
   status: string;
   notes?: string | null;
   created_at: string;
+  stripe_payment_intent_id: string | null;
+  stripe_payment_method: string | null;
+  stripe_paid_at: string | null;
   order_items?: Array<{ id: number; product_id?: number | null; product_name: string; quantity: number; unit_price: number }>;
 };
 
@@ -494,6 +497,14 @@ export default function AdminPage() {
                   <div className="mt-3 rounded-xl border border-slate-800 bg-slate-900 p-3 text-sm text-slate-300">
                     {order.address && <div>{order.address}</div>}
                     {order.notes && <div className="mt-1 text-slate-400">Note: {order.notes}</div>}
+                  </div>
+                )}
+
+                {(order.status === "paid" || order.stripe_payment_intent_id || order.stripe_paid_at) && (
+                  <div className="mt-3 grid gap-1 rounded-xl border border-emerald-900/60 bg-emerald-950/30 p-3 text-sm text-emerald-100">
+                    <strong>Payment confirmed{order.stripe_payment_method ? ` · ${order.stripe_payment_method}` : ""}</strong>
+                    {order.stripe_paid_at && <span className="text-xs text-emerald-200/70">Paid {new Date(order.stripe_paid_at).toLocaleString()}</span>}
+                    {order.stripe_payment_intent_id && <span className="break-all text-xs text-emerald-200/70">Stripe reference: {order.stripe_payment_intent_id}</span>}
                   </div>
                 )}
 

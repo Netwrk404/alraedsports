@@ -425,7 +425,8 @@ body { background: #090b0f; color: #f5f7fa; }
 .ar-account, .ar-bag-button { align-items: center; background: transparent; border: 0; color: #e2e7ee; cursor: pointer; display: inline-flex; font-size: 11px; font-weight: 700; gap: 8px; letter-spacing: .12em; white-space: nowrap; }
 .ar-account:hover, .ar-bag-button:hover { color: var(--ar-blue); }
 .ar-bag-button b { align-items: center; background: var(--ar-blue); border-radius: 50%; color: #07121f; display: inline-flex; font-size: 9px; height: 19px; justify-content: center; letter-spacing: 0; width: 19px; }
-.ar-floating-actions { bottom: 24px; display: flex; flex-direction: column; gap: 10px; position: fixed; right: 24px; z-index: 45; }
+.ar-floating-actions { bottom: 70px; display: flex; flex-direction: column; gap: 10px; position: fixed; right: 24px; z-index: 45; }
+.ar-floating-actions-shop { bottom: 70px; }
 .ar-floating-button { align-items: center; background: rgba(7, 13, 19, .92); border: 1px solid rgba(169, 209, 255, .18); box-shadow: 0 14px 32px rgba(0,0,0,.28); color: #edf4ff; cursor: pointer; display: inline-flex; justify-content: center; min-height: 36px; min-width: 36px; padding: 0; position: relative; transition: transform .2s, border-color .2s, background .2s; }
 .ar-floating-button:hover { background: rgba(13, 20, 29, .96); border-color: rgba(169, 209, 255, .45); transform: translateY(-2px); }
 .ar-floating-button b { align-items: center; background: var(--ar-blue); border-radius: 50%; bottom: -4px; color: #07121f; display: inline-flex; font-size: 8px; height: 16px; justify-content: center; letter-spacing: 0; position: absolute; right: -4px; width: 16px; }
@@ -1100,6 +1101,37 @@ body { background: #090b0f; color: #f5f7fa; }
 .orders-empty strong { color: #edf3f9; font-size: 13px; }
 .orders-empty p { font-size: 11px; margin: 6px 0 15px; }
 .orders-empty a { align-items: center; color: #a9d1ff; display: inline-flex; font-size: 10px; gap: 7px; }
+.account-orders-link { align-items: center; color: #a9d1ff; display: inline-flex; font-size: 9px; font-weight: 700; gap: 6px; letter-spacing: .08em; }
+.account-orders-link:hover { color: #fff; }
+.order-payment-summary { background: rgba(54, 138, 93, .12); border: 1px solid rgba(89, 171, 125, .28); color: #b4e4c4; display: grid; font-size: 10px; gap: 5px; margin-top: 13px; padding: 11px; }
+.order-payment-summary strong { color: #d7f5e1; font-size: 10px; }
+.order-payment-summary time { color: #8db99b; font-size: 9px; }
+.my-orders-list { display: grid; gap: 14px; }
+.my-order-card { border-radius: 3px; }
+.my-order-heading { align-items: flex-start; border-bottom: 1px solid #2b3542; display: flex; justify-content: space-between; padding-bottom: 16px; }
+.my-order-heading .account-kicker { margin-bottom: 5px; }
+.my-order-heading h2 { color: #f4f7fb; font: 600 20px 'Space Grotesk', sans-serif; margin: 0 0 5px; }
+.my-order-heading time { color: #8793a1; font-size: 10px; }
+.my-order-total { align-items: center; border-top: 1px solid #2b3542; color: #9aa6b4; display: flex; font-size: 11px; justify-content: space-between; padding-top: 13px; }
+.my-order-total strong { color: #f5f7fa; font-size: 14px; }
+.my-order-payment { background: rgba(54, 138, 93, .12); border: 1px solid rgba(89, 171, 125, .28); color: #b4e4c4; display: grid; font-size: 10px; gap: 6px; margin-top: 14px; overflow-wrap: anywhere; padding: 13px; }
+.my-order-payment > strong { align-items: center; color: #d7f5e1; display: flex; gap: 7px; }
+.my-order-payment time, .my-order-payment small { color: #8db99b; font-size: 9px; }
+.checkout-result-page { display: flex; flex-direction: column; }
+.checkout-result-card { margin: auto; max-width: 600px; padding: clamp(42px, 8vw, 90px) 24px; text-align: center; width: 100%; }
+.checkout-result-icon { align-items: center; border: 1px solid #3c526d; border-radius: 50%; color: #a9d1ff; display: inline-flex; height: 58px; justify-content: center; margin-bottom: 24px; width: 58px; }
+.checkout-result-icon.is-success { border-color: #3b8c5f; color: #a4e0b7; }
+.checkout-result-card .account-kicker { margin-bottom: 14px; }
+.checkout-result-card h1 { color: #fff; font: 600 clamp(42px, 7vw, 68px)/.98 'Space Grotesk', sans-serif; letter-spacing: -.055em; margin: 0; }
+.checkout-result-card h1 em { color: #9fcaff; font-style: normal; }
+.checkout-result-copy { color: #9aa6b4; font-size: 12px; line-height: 1.7; margin: 20px auto 25px; max-width: 440px; }
+.checkout-confirmation-details { border: 1px solid #293340; display: grid; margin: 24px 0; text-align: left; }
+.checkout-confirmation-details > div { display: grid; gap: 5px; overflow-wrap: anywhere; padding: 12px 14px; }
+.checkout-confirmation-details > div + div { border-top: 1px solid #293340; }
+.checkout-confirmation-details span { color: #8793a1; font-size: 9px; text-transform: uppercase; }
+.checkout-confirmation-details strong { color: #f5f7fa; font-size: 11px; }
+.checkout-result-action { margin-top: 8px; }
+.checkout-result-links { align-items: center; display: flex; flex-direction: column; gap: 18px; }
 .account-setup-banner, .account-alert, .account-notice { align-items: flex-start; display: flex; gap: 12px; margin: 0 0 16px; padding: 14px 16px; }
 .account-setup-banner { background: #111a25; border: 1px solid #31465d; }
 .account-setup-banner > span { color: #a9d1ff; }
@@ -1588,10 +1620,14 @@ textarea { transition-duration: .2s; }
 .account-signin > svg { color: var(--ink); }
 .account-panel,
 .address-card,
-.order-card { background: #fff; border-color: var(--theme-border); border-radius: 14px; box-shadow: 0 4px 16px rgba(35,27,16,.04); }
+.order-card,
+.my-order-card { background: #fff; border-color: var(--theme-border); border-radius: 14px; box-shadow: 0 4px 16px rgba(35,27,16,.04); }
 .account-panel-heading,
 .order-card-heading,
 .order-delivery,
+.my-order-heading,
+.my-order-total,
+.checkout-confirmation-details > div + div,
 .address-editor,
 .account-footer { border-color: var(--theme-border); }
 .account-field > span,
@@ -1604,6 +1640,28 @@ textarea { transition-duration: .2s; }
 .account-loading,
 .account-empty-inline,
 .account-signin > p:not(.account-kicker) { color: var(--muted); }
+.account-orders-link,
+.account-orders-link:hover { color: var(--ink); }
+.order-payment-summary,
+.my-order-payment { background: #f1f8f3; border-color: #c9e5d1; color: #316345; }
+.order-payment-summary strong,
+.my-order-payment > strong { color: #225437; }
+.order-payment-summary time,
+.my-order-payment time,
+.my-order-payment small { color: #557762; }
+.my-order-heading h2,
+.my-order-total strong,
+.checkout-result-card h1,
+.checkout-confirmation-details strong { color: var(--ink); }
+.my-order-heading time,
+.my-order-total,
+.checkout-result-copy,
+.checkout-confirmation-details span { color: var(--muted); }
+.checkout-result-icon { color: var(--ink); }
+.checkout-result-icon.is-success { color: #287044; }
+.checkout-confirmation-details,
+.checkout-confirmation-details > div + div { border-color: var(--theme-border); }
+.checkout-result-card h1 em { color: var(--ink); }
 .account-field input,
 .account-field textarea { background: #fff; border-color: var(--theme-border); border-radius: 8px; color: var(--ink); }
 .account-field input[readonly] { background: var(--paper); color: var(--muted); }
@@ -1696,19 +1754,17 @@ textarea { transition-duration: .2s; }
   background: var(--theme-card);
   border: 1px solid var(--theme-border);
   border-radius: 999px;
-  bottom: 22px;
+  bottom: 24px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, .2);
   color: var(--ink);
   cursor: pointer;
   display: inline-flex;
-  font-size: 10px;
-  font-weight: 700;
-  gap: 9px;
-  letter-spacing: .08em;
-  min-height: 44px;
-  padding: 0 16px;
+  height: 36px;
+  justify-content: center;
+  padding: 0;
   position: fixed;
-  right: 22px;
+  right: 24px;
+  width: 36px;
   z-index: 70;
 }
 .theme-toggle:hover { background: var(--theme-hover); border-color: var(--theme-hover); color: #fff; }
@@ -2201,7 +2257,9 @@ textarea { transition-duration: .2s; }
 	.checkout-success-toast { bottom: 14px; right: 14px; }
 	.header-group-profile .login-indicator { display: inline-flex; }
 	.header-group-profile .login-indicator span { display: none; }
-  .theme-toggle { bottom: 14px; right: 14px; }
+  .ar-floating-actions,
+  .ar-floating-actions-shop { bottom: 58px; right: 16px; }
+  .theme-toggle { bottom: 16px; height: 32px; right: 16px; width: 32px; }
 }
 @media (max-width: 760px) {
 	input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
